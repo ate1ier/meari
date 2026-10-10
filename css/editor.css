@@ -15,13 +15,13 @@
 .fb button{min-height:34px;padding:0 .7rem;border-radius:10px;font-size:.82rem;color:var(--mute)}
 .fb button:hover{background:var(--soft);color:var(--fg)}
 .fb output{min-width:3rem;font-size:.8rem;color:var(--mute);font-variant-numeric:tabular-nums}
-.page{max-width:var(--pw);margin:0 auto;padding:clamp(2rem,6vw,4.5rem) clamp(1.25rem,4vw,2rem) 45vh}
+.page{max-width:var(--ew,var(--pw));margin:0 auto;padding:clamp(2rem,6vw,4.5rem) clamp(1.25rem,4vw,2rem) 45vh}
 .num{font:800 clamp(5rem,13vw,9rem)/.85 Archivo,sans-serif;letter-spacing:-.02em;color:transparent;-webkit-text-stroke:.75px var(--mute);transition:-webkit-text-fill-color 1s}
 .done .num{-webkit-text-fill-color:var(--fg)}
 .ti{display:block;width:100%;margin:1.1rem 0 2.2rem;padding:.2rem 0;background:none;border:0;border-bottom:1px solid transparent;font-size:clamp(1.7rem,4vw,2.3rem);font-weight:800;letter-spacing:-.035em;outline:0;transition:border-color .3s}
 .ti:focus{border-color:var(--line)}.ti::placeholder{color:var(--mute)}
 #ed{outline:0;font:400 var(--fs)/var(--lh,2.05) var(--ff,"Noto Serif KR",serif);word-break:keep-all;white-space:pre-wrap;caret-color:var(--fg);min-height:40vh}
-#ed>*{text-indent:1em;min-height:1em;margin-bottom:.4em;transition:opacity .35s}
+#ed>*{text-indent:var(--pin,1em);min-height:1em;margin-bottom:var(--pgap,.4em);transition:opacity .35s}
 #ed>.sb{text-indent:0;text-align:center;letter-spacing:.6em;color:var(--mute)}
 #ed::selection,#ed *::selection{background:var(--m);color:var(--bg)}
 ::highlight(f){background:rgba(176,16,111,.22)}

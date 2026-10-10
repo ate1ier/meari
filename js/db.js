@@ -57,7 +57,10 @@ const db=(()=>{
   const iso=t=>new Date(t||Date.now()).toISOString();
   const chunk=(a,n)=>{const r=[];for(let i=0;i<a.length;i+=n)r.push(a.slice(i,i+n));return r};
   /* 서버는 한 번에 50건까지만 받아서, 많으면 나눠서 순서대로 보내요 */
-  const w=ops=>ops.length?chunk(ops,50).reduce((p,c)=>p.then(()=>api('write',{ops:c})),Promise.resolve()):null;
+  /* 한 번에 50건·약 1.5MB 까지만 보내요(서버 한도 3MB). 큰 본문이 많아도 나눠서 순서대로 보내요 */
+  const pack=(a,max=50)=>{const out=[];let c=[],n=0;for(const o of a){const s=JSON.stringify(o).length;if(c.length&&(c.length>=max||n+s>1.5e6)){out.push(c);c=[];n=0}c.push(o);n+=s}if(c.length)out.push(c);return out};
+  const w=ops=>ops.length?pack(ops).reduce((p,c)=>p.then(()=>api('write',{ops:c})),Promise.resolve()):null;
+  const wkOf=id=>WORKS.find(x=>x.id===id);
 
   function run(){
     if(busy||!q.length||!on)return;
@@ -86,21 +89,20 @@ const db=(()=>{
   }
   addEventListener('online',()=>{fails=0;run()});
 
-  const rowCh=(c,i)=>({id:c.id,n:c.n,title:c.t,body:c.c,pos:i});
-  const rowLo=(k,x)=>({kind:k,id:x.id,cat:x.c,title:x.t,body:x.b,pos:x.p||0});
+  const rowWk=W=>({id:W.id,title:W.t,pos:W.pos});
+  const rowCh=(c,i)=>({id:c.id,n:c.n,title:c.t,body:c.c,pos:i,work_id:c.w,status:c.s||'draft',goal:c.g||0});
+  const rowLo=(k,x)=>({kind:k,id:x.id,cat:x.c,title:x.t,body:x.b,pos:x.p||0,work_id:x.w});
 
-  /* 처음 가입한 계정에 넣어 줄 기본 내용 (state.js 의 SEED_CHS, works.js 의 LORE.seed, SEED_MEMOS) */
+  /* 처음 가입한 계정에 넣어 줄 기본 내용: 빈 1화 하나가 든 '새 원고' */
   async function seed(){
-    const chs0=SEED_CHS.map(c=>({...c,_sig:c.t+'\0'+c.c})),
-      lore0={world:LORE.world.seed.map((x,i)=>({...x,p:i})),codex:LORE.codex.seed.map((x,i)=>({...x,p:i}))},
+    const id=Date.now(),W={id,t:'새 원고',pos:0,at:Date.now(),chs:SEED_CHS.map((c,i)=>({...c,id:id+1+i,w:id,_sig:c.t+'\0'+c.c})),world:[],codex:[]},
       memos0=SEED_MEMOS.map((m,i)=>({id:i+1,t:m,at:Date.now()-864e5}));
     await api('write',{ops:[
-      {t:'ch',rows:chs0.map(rowCh)},
-      ...(lore0.world.length+lore0.codex.length?[{t:'lo',rows:[...lore0.world.map(x=>rowLo('world',x)),...lore0.codex.map(x=>rowLo('codex',x))]}]:[]),
+      {t:'wk',rows:[rowWk(W)]},{t:'ch',rows:W.chs.map(rowCh)},
       ...(memos0.length?[{t:'me',rows:memos0.map(m=>({id:m.id,t:m.t,at:iso(m.at)}))}]:[]),
-      {t:'prefs',data:{}}   /* 마지막에 넣어서 "준비 끝" 표시로 씀 */
+      {t:'prefs',data:{cur:id}}   /* 마지막에 넣어서 "준비 끝" 표시로 씀 */
     ]});
-    return{chs:chs0,world:lore0.world,codex:lore0.codex,memos:memos0,wlog:{},prefs:{},lastEdit:0};
+    return{works:[W],memos:memos0,wlog:{},prefs:{cur:id},lastEdit:0};
   }
 
   return{
@@ -112,19 +114,30 @@ const db=(()=>{
       const j=await api('load');
       on=true;
       if(!j.settings){const d=await seed();prefs=d.prefs;return{...d,user:j.user}}
-      const lore=k=>j.lore.filter(r=>r.kind===k).map(r=>({id:r.id,c:r.cat,t:r.title,b:r.body,p:r.pos}));
       prefs=j.settings.data||{};
       const wlog={};j.log.forEach(r=>{wlog[r.day]=r.chars});
-      let chs1=j.chapters.map(r=>({id:r.id,n:r.n,t:r.title,c:r.body,_sig:r.title+'\0'+r.body}));
-      if(!chs1.length){ /* 화가 하나도 없는 비정상 상태: 빈 1화를 만들어 둠 */
-        const c={id:Date.now(),n:1,t:'',c:'',_sig:'\0'};chs1=[c];
-        await api('write',{ops:[{t:'ch',rows:[rowCh(c,0)]}]});
+      const ws=(j.works||[]).map(r=>({id:r.id,t:r.title,pos:r.pos,at:new Date(r.updated_at).getTime()||0,chs:[],world:[],codex:[]}));
+      /* 원고 여러 개 기능이 생기기 전에 쓴 글(work_id 0)은 첫 원고로 옮겨 담아요 */
+      if(j.chapters.some(r=>!r.work_id)||j.lore.some(r=>!r.work_id)){
+        let W=ws[0];
+        if(!W){W={id:Date.now(),t:typeof prefs.title==='string'&&prefs.title?prefs.title:'새 원고',pos:0,at:0,chs:[],world:[],codex:[]};ws.push(W)}
+        await api('write',{ops:[{t:'wk',rows:[rowWk(W)]},{t:'wk-adopt',id:W.id}]});
+        j.chapters.forEach(r=>{if(!r.work_id)r.work_id=W.id});j.lore.forEach(r=>{if(!r.work_id)r.work_id=W.id});
       }
+      const by=new Map(ws.map(W=>[W.id,W]));
+      j.chapters.forEach(r=>{const W=by.get(r.work_id);if(!W)return;W.chs.push({id:r.id,n:r.n,t:r.title,c:r.body,s:r.status||'draft',g:r.goal||0,w:W.id,_sig:r.title+'\0'+r.body});W.at=Math.max(W.at,new Date(r.updated_at).getTime()||0)});
+      j.lore.forEach(r=>{const W=by.get(r.work_id);if(W)W[r.kind].push({id:r.id,c:r.cat,t:r.title,b:r.body,p:r.pos,w:W.id})});
+      if(!ws.length){const W={id:Date.now(),t:'새 원고',pos:0,at:0,chs:[],world:[],codex:[]};ws.push(W);await api('write',{ops:[{t:'wk',rows:[rowWk(W)]}]})}
+      for(const W of ws){
+        W.world.sort((a,b)=>a.p-b.p);W.codex.sort((a,b)=>a.p-b.p);
+        if(!W.chs.length){const c={id:Date.now()+Math.floor(Math.random()*1e3),n:1,t:'',c:'',w:W.id,_sig:'\0'};W.chs.push(c);await api('write',{ops:[{t:'ch',rows:[rowCh(c,0)]}]})} /* 화가 하나도 없는 원고는 빈 1화를 만들어 둠 */
+        if(!W.at)W.at=Date.now();
+      }
+      ws.sort((a,b)=>a.pos-b.pos);
       return{
-        user:j.user,chs:chs1,world:lore('world'),codex:lore('codex'),
+        user:j.user,works:ws,
         memos:j.memos.map(r=>({id:r.id,t:r.t,at:new Date(r.at).getTime()})),
-        wlog,prefs,
-        lastEdit:j.chapters.reduce((m,r)=>Math.max(m,new Date(r.updated_at).getTime()||0),0)
+        wlog,prefs,lastEdit:ws.reduce((m,W)=>Math.max(m,W.at),0)
       };
     },
     /* 로그아웃 때: 대기 중인 저장이 모두 끝날 때까지 기다려요(실패하면 reject) */
@@ -135,17 +148,19 @@ const db=(()=>{
     })},
     reset(){on=false;q=[];busy=false;fails=0;prefs={}},
 
-    /* 원고 통째로 삭제/복원 (화·세계관·설정집) */
-    dropWork(items){enqueue('drop:'+Date.now()+Math.random(),()=>w(items.map(x=>x.ch?{t:'ch-del',id:x.ch}:{t:'lo-del',kind:x.k,id:x.id})))},
-    restoreWork(){enqueue('restore:'+Date.now()+Math.random(),()=>w([
-      ...chunk(chs.map(rowCh),50).map(rows=>({t:'ch',rows})),
-      ...chunk([...LORE.world.items.map(x=>rowLo('world',x)),...LORE.codex.items.map(x=>rowLo('codex',x))],50).map(rows=>({t:'lo',rows}))]))},
+    /* 원고(작품) — 만들기·제목 바꾸기, 통째로 삭제(화·세계관·설정집 포함)와 되돌리기 */
+    work(W){enqueue('wk:'+W.id,()=>WORKS.includes(W)?w([{t:'wk',rows:[rowWk(W)]}]):null)},
+    delWork(id){enqueue('delwk:'+id+':'+Date.now(),()=>w([{t:'wk-del',id}]))},
+    restoreWork(W){enqueue('restore:'+W.id+':'+Date.now(),()=>w([
+      {t:'wk',rows:[rowWk(W)]},
+      ...pack(W.chs.map(rowCh)).map(rows=>({t:'ch',rows})),
+      ...pack([...W.world.map(x=>rowLo('world',x)),...W.codex.map(x=>rowLo('codex',x))]).map(rows=>({t:'lo',rows}))]))},
 
-    chapter(c){enqueue('ch:'+c.id,()=>chs.includes(c)?w([{t:'ch',rows:[rowCh(c,chs.indexOf(c))]}]):null)},
-    chapters(){enqueue('chs',()=>w(chunk(chs.map((c,i)=>({id:c.id,n:c.n,title:c.t,pos:i})),200).map(rows=>({t:'ch-meta',rows}))))},   /* 번호·제목·순서(본문 제외) */
+    chapter(c){enqueue('ch:'+c.id,()=>{const W=wkOf(c.w);return W&&W.chs.includes(c)?w([{t:'ch',rows:[rowCh(c,W.chs.indexOf(c))]}]):null})},
+    chapters(W){enqueue('chs:'+W.id,()=>WORKS.includes(W)?w(chunk(W.chs.map((c,i)=>({id:c.id,n:c.n,title:c.t,pos:i,work_id:W.id,status:c.s||'draft',goal:c.g||0})),200).map(rows=>({t:'ch-meta',rows}))):null)},   /* 번호·제목·순서(본문 제외) */
     delChapter(id){enqueue('delch:'+id,()=>w([{t:'ch-del',id}]))},
 
-    lore(k,x){enqueue('lo:'+k+':'+x.id,()=>LORE[k].items.includes(x)?w([{t:'lo',rows:[rowLo(k,x)]}]):null)},
+    lore(k,x){enqueue('lo:'+k+':'+x.id,()=>{const W=wkOf(x.w);return W&&W[k].includes(x)?w([{t:'lo',rows:[rowLo(k,x)]}]):null})},
     delLore(k,id){enqueue('dello:'+k+':'+id,()=>w([{t:'lo-del',kind:k,id}]))},
 
     memoAdd(m){enqueue('me:'+m.id,()=>w([{t:'me',rows:[{id:m.id,t:m.t,at:iso(m.at)}]}]))},

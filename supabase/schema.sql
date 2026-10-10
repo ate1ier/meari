@@ -3,7 +3,7 @@
 --
 -- ⚠ 맨 위의 drop 은 이전 버전(auth.users 기반) 테이블을 지우는 줄이에요.
 --    새 프로젝트이거나 이전 테이블에 지워도 되는 데이터만 있을 때만 실행하세요.
-drop table if exists public.chapters, public.lore_items, public.memos,
+drop table if exists public.works, public.chapters, public.lore_items, public.memos,
   public.writing_log, public.user_settings cascade;
 
 -- 계정: 아이디 + 암호 해시(PBKDF2). 암호 원문은 어디에도 저장되지 않아요.
@@ -33,13 +33,26 @@ create table if not exists public.meari_attempts (
 create index if not exists meari_attempts_key_at on public.meari_attempts(key, at);
 
 -- 원고·설정 데이터
+-- 원고(작품): 각 원고가 자기 화·세계관·설정집을 가져요
+create table if not exists public.works (
+  user_id    uuid   not null references public.meari_users(id) on delete cascade,
+  id         bigint not null,
+  title      text   not null default '' check (char_length(title) <= 60),
+  pos        int    not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, id)
+);
 create table if not exists public.chapters (
   user_id    uuid   not null references public.meari_users(id) on delete cascade,
   id         bigint not null,
+  work_id    bigint not null default 0,
   n          int    not null,
   title      text   not null default '' check (char_length(title) <= 100),
   body       text   not null default '' check (char_length(body) <= 300000),
   pos        int    not null default 0,
+  status     text   not null default 'draft' check (status in ('draft','revise','done')), -- 초고·퇴고·완료
+  goal       int    not null default 0 check (goal between 0 and 100000),                  -- 이 화의 목표 글자 수(0 = 원고 기본값)
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   primary key (user_id, id)
@@ -48,6 +61,7 @@ create table if not exists public.lore_items (
   user_id uuid   not null references public.meari_users(id) on delete cascade,
   kind    text   not null check (kind in ('world','codex')),
   id      bigint not null,
+  work_id bigint not null default 0,
   cat     text   not null default '' check (char_length(cat) <= 20),
   title   text   not null default '' check (char_length(title) <= 100),
   body    text   not null default '' check (char_length(body) <= 100000),
@@ -80,9 +94,12 @@ create table if not exists public.user_settings (
 do $$
 declare t text;
 begin
-  foreach t in array array['meari_users','meari_sessions','meari_attempts','chapters','lore_items','memos','writing_log','user_settings'] loop
+  foreach t in array array['meari_users','meari_sessions','meari_attempts','works','chapters','lore_items','memos','writing_log','user_settings'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('revoke all on public.%I from anon, authenticated', t);
   end loop;
 end $$;
 revoke all on sequence public.meari_attempts_id_seq from anon, authenticated;
+
+create index if not exists chapters_work on public.chapters(user_id, work_id, pos);
+create index if not exists lore_items_work on public.lore_items(user_id, work_id, pos);

@@ -62,7 +62,7 @@
       <div id="subx"></div>
     </div></div>
   </nav>
-  <div class="chsec"><div class="chh"><small id="chn">새 원고</small><button class="chm" id="chm" type="button" aria-pressed="false" title="화 삭제·순서·제목 정리">정리</button></div><nav class="chs" id="chs" aria-label="화"></nav>
+  <div class="chsec"><div class="chh"><small id="chn">새 원고</small><button class="chm" id="chm" type="button" aria-pressed="false" title="화 삭제·순서·제목 정리">정리</button></div><small class="chsum" id="chsum"></small><nav class="chs" id="chs" aria-label="화"></nav>
     <button class="add" id="add" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>새 화 추가</button></div>
   <div class="sp"></div>
   <div class="sbm"><small>빠른 메모</small>
@@ -79,7 +79,7 @@
 <main id="home">
   <div class="hi"><button class="kb" id="kb" type="button" aria-label="빠른 이동 열기">빠른 이동<kbd></kbd></button><p id="dt"></p><h1 id="gr"></h1></div>
   <button class="cur" type="button" id="resume">
-    <small>어제 밤에 멈춘 곳</small>
+    <small id="cs">어제 밤에 멈춘 곳</small>
     <h2 id="title" aria-label="새 원고"></h2>
     <p id="ex"></p>
     <footer><span class="cta" id="gt">이어 쓰기<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><span class="today" id="tod"></span></footer>
@@ -105,8 +105,8 @@
   <div class="hi"><p>내 원고</p><h1>집필 중인 이야기와 그 세계</h1></div>
   <section class="wk"><h3><span>집필 중</span><button class="more" type="button" data-go="all">모두 보기</button></h3><div id="wkl"></div></section>
   <div class="cols">
-    <section class="wk"><h3><span>세계관</span><button class="more" type="button" data-go="world">모두 보기</button></h3><div id="wkw"></div></section>
-    <section class="wk"><h3><span>설정집</span><button class="more" type="button" data-go="codex">모두 보기</button></h3><div id="wkc"></div></section>
+    <section class="wk"><h3><span id="wkwh">세계관</span><button class="more" type="button" data-go="world">모두 보기</button></h3><div id="wkw"></div></section>
+    <section class="wk"><h3><span id="wkch">설정집</span><button class="more" type="button" data-go="codex">모두 보기</button></h3><div id="wkc"></div></section>
   </div>
   <section class="wk"><h3><span>최근 2주 집필량</span><span class="streak" id="stk"></span></h3><ul class="act" id="act"></ul></section>
 </main>
@@ -136,7 +136,8 @@
   <div class="top">
     <div class="tb">
       <span class="st" id="st" role="status">저장됨</span>
-      <span class="stat"><span class="sel" id="sel" hidden></span><span class="td" id="td"></span><button id="cm" type="button" title="공백 포함/제외 전환"><span id="cnt">0자</span></button><span class="mae" id="mae"></span></span>
+      <span class="stat"><span class="sel" id="sel" hidden></span><span class="td" id="td"></span><button id="cm" type="button" title="공백 포함/제외 전환"><span id="cnt">0자</span></button><span class="rt" id="rt" hidden></span><span class="rd" id="rd" hidden></span><span class="mae" id="mae"></span></span>
+      <button id="spb" type="button" aria-expanded="false" aria-controls="spp" title="맞춤법 오류 목록 · F8 다음 오류, Shift+F8 이전 오류">맞춤법</button>
       <button id="mo" type="button" aria-expanded="false" aria-controls="mp" title="빠른 메모">메모</button>
       <button id="fdb" type="button" aria-expanded="false" title="Ctrl/⌘+F">찾기</button>
       <button id="fm" type="button" aria-label="글자 작게">가−</button>
@@ -146,7 +147,18 @@
         <p>글꼴</p><div class="opt" id="ffo"></div>
         <p>줄간격</p><div class="opt" id="flo"></div>
         <button class="rs" id="frs" type="button">글꼴·줄간격 기본값</button>
+        <p class="hd">한 화 목표</p><div class="opt" id="cgo"></div>
+        <p>하루 목표</p><div class="opt" id="dgo"></div>
+        <p class="hd">문단 모양</p>
+        <div class="opt" id="pfp"></div>
+        <p>들여쓰기</p><div class="opt" id="pfi"></div>
+        <p>문단 간격</p><div class="opt" id="pfg"></div>
+        <p>줄 폭</p><div class="opt" id="pfw"></div>
         <p class="hd">글쓰기 도우미</p><div class="tg" id="tgl"></div>
+        <p>긴 문장 기준</p><div class="opt" id="lno"></div>
+        <p>습관어 <small>(자주 쓰는 말을 등록하면 본문에 표시해요)</small></p>
+        <form id="habf" class="habf"><label class="sr" for="habi">습관어</label><input class="field" id="habi" maxlength="20" placeholder="예: 정말, 그저, 어느새 + Enter" autocomplete="off"></form>
+        <ul class="hab" id="habl"></ul>
       </div>
       <button id="fc" type="button" aria-pressed="false">집중</button>
     </div>
@@ -157,15 +169,22 @@
       <button id="fpv" type="button">이전</button><button id="fnx" type="button">다음</button>
       <button id="r1" type="button">바꾸기</button><button id="ra" type="button">모두 바꾸기</button><button id="fx" type="button">닫기</button>
     </div>
-    <div class="gl" role="img" aria-label="한 화 목표 3,000자 진행" id="glr"><i id="gl"></i></div>
+    <div class="gl" role="img" aria-label="한 화 목표 진행" id="glr"><i id="gl"></i></div>
   </div>
   <div class="mp" id="mp" role="complementary" aria-label="빠른 메모" hidden>
     <form id="mpf"><label class="sr" for="mpi">메모</label><input class="field" id="mpi" maxlength="80" placeholder="떠오른 생각을 적고 Enter" autocomplete="off"></form>
     <ul class="notes" id="mpl"></ul>
   </div>
+  <div class="mp spp" id="spp" role="complementary" aria-label="맞춤법 오류 목록" hidden>
+    <div class="sph"><b id="spn">맞춤법</b><button id="spr" type="button" title="다시 검사">새로 검사</button><button id="spx" type="button" aria-label="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <ul class="spl" id="spl"></ul>
+    <p class="spk">F8 다음 오류 · Shift+F8 이전 오류 (⌥+] / ⌥+[ 도 돼요)</p>
+    <button class="spi" id="spi" type="button" hidden></button>
+  </div>
   <div class="page" id="page">
     <div class="num" id="num" aria-hidden="true">24</div>
     <label class="sr" for="ti">화 제목</label><input class="ti" id="ti" maxlength="40" placeholder="제목 없음" autocomplete="off">
+    <div class="cmeta" id="cmeta"><div class="seg" id="cst" role="group" aria-label="이 화의 상태"></div><label class="sr" for="cgs">이 화의 목표 글자 수</label><select id="cgs" title="이 화만의 목표 글자 수"></select></div>
     <div class="men" id="men" aria-label="이 화에 나온 설정"></div>
     <div id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-label="본문" aria-autocomplete="list" aria-controls="atm" spellcheck="false"></div>
   </div>

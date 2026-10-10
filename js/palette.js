@@ -1,7 +1,8 @@
 const pal=$('#pal'),pq=$('#pq'),pl=$('#pl');let pit=[],pi=0;
 $('#kb kbd').textContent=/Mac|iP/.test(navigator.platform)?'⌘K':'Ctrl K';
 function pall(){
-  const a=[['홈','이동',()=>view('home')],['내 원고','이동',()=>view('works')],['세계관',wTitle,()=>view('world')],['설정집',wTitle,()=>view('codex')],['집중 모드','편집',()=>{view('edit');focusMode(!app.classList.contains('focus'))}]];
+  const a=[['홈','이동',()=>view('home')],['내 원고','이동',()=>view('works')],['세계관',wk.t,()=>view('world')],['설정집',wk.t,()=>view('codex')],['집중 모드','편집',()=>{view('edit');focusMode(!app.classList.contains('focus'))}],['맞춤법 오류 목록','편집',()=>{view('edit');spPanel(true)}],['새 원고 만들기','원고',newWork]];
+  WORKS.filter(w=>w!==wk).forEach(w=>a.push([w.t,'원고 전환',()=>enterWork(w.id)]));
   chs.slice().reverse().forEach(c=>a.push([c.n+'화 '+(c.t||'제목 없음'),'원고',()=>{view('edit');open(c)}]));
   [['world','세계관'],['codex','설정집']].forEach(([k,n])=>LORE[k].items.forEach(x=>x.t.trim()&&a.push([x.t,n+' · '+x.c,()=>{view(k);openLore(x)}])));
   return a;

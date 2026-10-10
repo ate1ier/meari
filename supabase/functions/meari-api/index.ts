@@ -24,10 +24,14 @@ const E=r=>{if(r.error)throw r.error;return r};
 const now=()=>new Date().toISOString();
 const isInt=v=>Number.isSafeInteger(v)&&Math.abs(v)<=9e15;
 const isStr=(v,max)=>typeof v==='string'&&v.length<=max;
+const ST=['draft','revise','done'];
+const okMeta=(r:any)=>ST.includes(r.status)&&isInt(r.goal)&&r.goal>=0&&r.goal<=100000; /* 화 상태·개별 목표 */
 const isTime=v=>typeof v==='string'&&!Number.isNaN(Date.parse(v));
 const bad=()=>{throw new Http(400,'invalid')};
 const rowsOf=(o,max=500)=>{if(!Array.isArray(o.rows)||o.rows.length>max)bad();return o.rows};
 
+/* 서버 한도(보통 1000행)를 넘는 목록도 끝까지 읽어요 */
+async function pages(make){const out=[];for(let i=0;i<20;i++){const r=E(await make().range(i*1000,i*1000+999));out.push(...r.data);if(r.data.length<1000)break}return out}
 async function tooMany(sb,key,max,mins){
   const since=new Date(Date.now()-mins*60000).toISOString();
   const r=E(await sb.from('meari_attempts').select('id').eq('key',key).gte('at',since).limit(max));
@@ -52,18 +56,33 @@ async function authed(sb,token){
 async function exec(sb,uid,o){
   if(!o||typeof o!=='object')bad();
   switch(o.t){
+    case'wk':{ /* 원고(작품): 만들기·제목·순서 */
+      const rows=rowsOf(o,50).map(r=>{if(!(isInt(r.id)&&r.id>0&&isStr(r.title,60)&&isInt(r.pos)))bad();return{user_id:uid,id:r.id,title:r.title,pos:r.pos,updated_at:now()}});
+      if(rows.length)E(await sb.from('works').upsert(rows,{onConflict:'user_id,id'}));
+    }break;
+    case'wk-del':  /* 원고를 지우면 그 원고의 화·세계관·설정집도 함께 지워요 */
+      if(!(isInt(o.id)&&o.id>0))bad();
+      E(await sb.from('chapters').delete().eq('user_id',uid).eq('work_id',o.id));
+      E(await sb.from('lore_items').delete().eq('user_id',uid).eq('work_id',o.id));
+      E(await sb.from('works').delete().eq('user_id',uid).eq('id',o.id));
+      break;
+    case'wk-adopt': /* 원고 기능이 생기기 전(work_id 0)에 쓴 글을 이 원고로 옮겨 담아요 */
+      if(!(isInt(o.id)&&o.id>0))bad();
+      E(await sb.from('chapters').update({work_id:o.id}).eq('user_id',uid).eq('work_id',0));
+      E(await sb.from('lore_items').update({work_id:o.id}).eq('user_id',uid).eq('work_id',0));
+      break;
     case'ch':for(const r of rowsOf(o,50)){
-      if(!(isInt(r.id)&&r.id>0&&isInt(r.n)&&isStr(r.title,100)&&isStr(r.body,300000)&&isInt(r.pos)))bad();
-      E(await sb.from('chapters').upsert({user_id:uid,id:r.id,n:r.n,title:r.title,body:r.body,pos:r.pos,updated_at:now()},{onConflict:'user_id,id'}));
+      if(!(isInt(r.id)&&r.id>0&&isInt(r.n)&&isStr(r.title,100)&&isStr(r.body,300000)&&isInt(r.pos)&&isInt(r.work_id)&&r.work_id>0&&okMeta(r)))bad();
+      E(await sb.from('chapters').upsert({user_id:uid,id:r.id,work_id:r.work_id,n:r.n,title:r.title,body:r.body,pos:r.pos,status:r.status,goal:r.goal,updated_at:now()},{onConflict:'user_id,id'}));
     }break;
     case'ch-meta':{ /* 번호·제목·순서만(본문은 건드리지 않음) */
-      const rows=rowsOf(o).map(r=>{if(!(isInt(r.id)&&r.id>0&&isInt(r.n)&&isStr(r.title,100)&&isInt(r.pos)))bad();return{user_id:uid,id:r.id,n:r.n,title:r.title,pos:r.pos}});
+      const rows=rowsOf(o).map(r=>{if(!(isInt(r.id)&&r.id>0&&isInt(r.n)&&isStr(r.title,100)&&isInt(r.pos)&&isInt(r.work_id)&&r.work_id>0&&okMeta(r)))bad();return{user_id:uid,id:r.id,work_id:r.work_id,n:r.n,title:r.title,pos:r.pos,status:r.status,goal:r.goal}});
       if(rows.length)E(await sb.from('chapters').upsert(rows,{onConflict:'user_id,id'}));
     }break;
     case'ch-del':if(!isInt(o.id))bad();E(await sb.from('chapters').delete().eq('user_id',uid).eq('id',o.id));break;
     case'lo':for(const r of rowsOf(o,50)){
-      if(!(['world','codex'].includes(r.kind)&&isInt(r.id)&&r.id>0&&isStr(r.cat,20)&&isStr(r.title,100)&&isStr(r.body,100000)&&isInt(r.pos)))bad();
-      E(await sb.from('lore_items').upsert({user_id:uid,kind:r.kind,id:r.id,cat:r.cat,title:r.title,body:r.body,pos:r.pos,updated_at:now()},{onConflict:'user_id,kind,id'}));
+      if(!(['world','codex'].includes(r.kind)&&isInt(r.id)&&r.id>0&&isStr(r.cat,20)&&isStr(r.title,100)&&isStr(r.body,100000)&&isInt(r.pos)&&isInt(r.work_id)&&r.work_id>0))bad();
+      E(await sb.from('lore_items').upsert({user_id:uid,kind:r.kind,id:r.id,work_id:r.work_id,cat:r.cat,title:r.title,body:r.body,pos:r.pos,updated_at:now()},{onConflict:'user_id,kind,id'}));
     }break;
     case'lo-del':if(!(['world','codex'].includes(o.kind)&&isInt(o.id)))bad();E(await sb.from('lore_items').delete().eq('user_id',uid).eq('kind',o.kind).eq('id',o.id));break;
     case'me':{
@@ -129,17 +148,18 @@ export function makeHandler(sb,cfg={}){
       if(b.op==='logout'){E(await sb.from('meari_sessions').delete().eq('token_hash',h));return send(200,{ok:true})}
 
       if(b.op==='load'){
-        const[us,ch,lo,me,lg,st]=await Promise.all([
+        const[us,ch,lo,wk,me,lg,st]=await Promise.all([
           sb.from('meari_users').select('id,username').eq('id',uid).maybeSingle(),
-          sb.from('chapters').select('id,n,title,body,pos,updated_at').eq('user_id',uid).order('pos').limit(1000),
-          sb.from('lore_items').select('kind,id,cat,title,body,pos').eq('user_id',uid).order('pos').limit(1000),
+          pages(()=>sb.from('chapters').select('id,work_id,n,title,body,pos,status,goal,updated_at').eq('user_id',uid).order('work_id').order('pos').order('id')),
+          pages(()=>sb.from('lore_items').select('kind,id,work_id,cat,title,body,pos').eq('user_id',uid).order('work_id').order('pos').order('id')),
+          sb.from('works').select('id,title,pos,updated_at').eq('user_id',uid).order('pos').limit(100),
           sb.from('memos').select('id,t,at').eq('user_id',uid).order('at',{ascending:false}).limit(30),
           sb.from('writing_log').select('day,chars').eq('user_id',uid).order('day',{ascending:false}).limit(800),
           sb.from('user_settings').select('data').eq('user_id',uid).maybeSingle()]);
-        for(const r of[us,ch,lo,me,lg,st])E(r);
+        for(const r of[us,wk,me,lg,st])E(r);
         if(!us.data)throw new Http(401,'unauth');
         await sb.from('meari_sessions').update({expires_at:new Date(Date.now()+SESSION_DAYS*864e5).toISOString()}).eq('token_hash',h); // 열 때마다 연장
-        return send(200,{ok:true,user:us.data,chapters:ch.data,lore:lo.data,memos:me.data,log:lg.data,settings:st.data||null});
+        return send(200,{ok:true,user:us.data,works:wk.data,chapters:ch,lore:lo,memos:me.data,log:lg.data,settings:st.data||null});
       }
 
       if(b.op==='write'){

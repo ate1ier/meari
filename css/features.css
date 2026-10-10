@@ -116,3 +116,48 @@ aside .logo{box-shadow:0 1px 0 rgba(247,246,243,.1)}
 .mp .notes li{padding:.7rem .3rem}
 .mp .notes button{opacity:.6}
 :root[data-theme=dark] .mp{background:#1a1a1e;box-shadow:0 0 0 1px rgba(255,255,255,.16),0 18px 48px rgba(0,0,0,.6)}
+
+/* 맞춤법 오류 목록 */
+.spp{width:min(21rem,calc(100vw - 2rem))}
+.spp .sph{display:flex;align-items:center;gap:.3rem;margin-bottom:.3rem}
+.spp .sph b{margin-right:auto;font-size:.95rem}
+.spp .sph button,.spp .spi{min-height:30px;padding:0 .6rem;border-radius:9px;font-size:.78rem;color:var(--mute);transition:background .2s,color .2s}
+.spp .sph button:hover,.spp .spi:hover{background:var(--soft);color:var(--fg)}
+.spp .sph button svg{width:14px;height:14px}
+.spl{list-style:none;padding:0;margin:0;overflow:auto;min-height:3rem}
+.spl .gh{display:flex;justify-content:space-between;gap:1rem;padding:.8rem .3rem .25rem;font-size:.74rem;color:var(--mute)}
+.spl li button{display:grid;gap:.15rem;width:100%;padding:.5rem .55rem;border-radius:10px;text-align:left;transition:background .2s}
+.spl li button:hover,.spl li button:focus-visible{background:var(--soft)}
+.spl li b{font-size:.9rem;font-weight:600}
+.spl li small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.76rem;color:var(--mute)}
+.spl .none{padding:1rem .3rem;font-size:.86rem}
+.spp .spk{margin:.5rem .3rem 0;font-size:.72rem;color:var(--mute)}
+.spp .spi{align-self:flex-start;margin-top:.3rem}
+.si.add2{opacity:.5;font-size:.82rem}
+
+/* 화 상태 · 화별 목표 */
+.cmeta{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;margin:-1.2rem 0 1.4rem}.cmeta+.men{margin-top:0}.focus .cmeta{display:none}
+.seg{display:inline-flex;padding:2px;border-radius:10px;background:var(--soft)}
+.seg button{min-height:30px;padding:0 .8rem;border-radius:8px;font-size:.82rem;color:var(--mute);transition:background .25s,color .25s}
+.seg button:hover{color:var(--fg)}
+.seg button[aria-pressed=true]{background:var(--act,var(--m));color:var(--actfg,#fff)}
+.cmeta select{min-height:34px;padding:0 .6rem;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--fg);font:inherit;font-size:.82rem}
+.chsum{padding:0 .75rem;font-size:.74rem;opacity:.55;font-variant-numeric:tabular-nums}
+.ch .stl{font-style:normal}
+.chw[data-s=revise] .ch .stl{color:#f0b429}
+.chw[data-s=done] .ch .stl{color:#4cc38a}
+.chw.on .ch .stl{color:inherit}
+/* 글쓰기 도우미 추가분 */
+::highlight(long){text-decoration:underline dotted;text-decoration-color:#e8590c;text-decoration-thickness:2px;text-underline-offset:.3em}
+::highlight(hab){background:rgba(124,92,255,.18)}
+:root[data-theme=dark]::highlight(hab){background:rgba(160,140,255,.28)}
+.fpn p small{opacity:.8}
+.habf{margin:0 0 .5rem}.habf .field{width:100%;min-height:36px}
+.hab{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.3rem}
+.hab li{display:inline-flex;align-items:center;gap:.35rem;padding:.1rem .2rem .1rem .6rem;border-radius:999px;background:var(--soft);font-size:.82rem}
+.hab small{color:var(--mute);font-variant-numeric:tabular-nums}
+.hab button{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;color:var(--mute)}.hab button:hover{background:var(--line);color:var(--fg)}
+.hab svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
+.hab:empty{display:none}
+/* 도구줄이 좁으면 줄을 바꿔요(지표가 늘어도 글자가 꺾이지 않게) */
+.tb{flex-wrap:wrap;row-gap:.1rem}.tb .st,.tb button,.stat>*{white-space:nowrap}.stat{flex-wrap:wrap;row-gap:0}

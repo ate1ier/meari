@@ -590,7 +590,10 @@ aside .logo {
 /* 도우미 스위치 */
 .fpn {
   max-height: calc(100vh - 5rem);
-  overflow: auto;
+  overflow-x: hidden; /* 가로 스크롤은 만들지 않아요. 긴 설명은 줄을 바꿔요 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  white-space: normal; /* 위 도구줄의 nowrap 을 이어받으면 설명이 한 줄로 길어져 스위치가 밀려나요 */
 }
 .fpn .hd {
   margin-top: 1rem;
@@ -609,6 +612,11 @@ aside .logo {
   font-size: 0.88rem;
   color: var(--fg);
   text-align: left;
+}
+.tg button > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .tg button:hover {
   background: var(--soft);

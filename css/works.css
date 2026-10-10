@@ -596,7 +596,7 @@
   padding: 0 0.8rem;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: var(--bg);
+  background: var(--field);
   color: var(--fg);
   font: inherit;
   font-size: 0.9rem;
@@ -612,7 +612,7 @@
   min-height: 34px;
   padding: 0 0.8rem;
   border-radius: 10px;
-  background: var(--bg);
+  background: var(--field);
   color: var(--mute);
   font-size: 0.82rem;
   transition:
@@ -638,7 +638,7 @@
   margin-left: 0.4rem;
   padding: 0.05rem 0.45rem;
   border-radius: 8px;
-  background: var(--bg);
+  background: var(--field);
   font-style: normal;
   font-size: 0.7rem;
   color: var(--mute);
@@ -714,7 +714,7 @@
   min-height: 30px;
   padding: 0 0.7rem;
   font-size: 0.78rem;
-  background: var(--bg);
+  background: var(--field);
 }
 .llc {
   display: grid;
@@ -735,7 +735,7 @@
   transition: background var(--t-hover);
 }
 .llc button:hover {
-  background: var(--bg);
+  background: var(--field);
 }
 .llc small {
   margin-left: auto;
@@ -1184,7 +1184,7 @@
   margin-top: -4px;
   border-radius: 50%;
   background: var(--m);
-  box-shadow: 0 0 0 3px var(--bg);
+  box-shadow: 0 0 0 3px var(--paper);
 }
 .tlv.un {
   border-left-style: dashed;
@@ -1440,7 +1440,7 @@
   padding: 0 2rem 0 2.2rem;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: var(--bg);
+  background: var(--field);
   color: var(--fg);
   font: inherit;
   font-size: 0.88rem;
@@ -1714,7 +1714,7 @@ svg.hi .ge.on .gtx {
   padding: 0 0.8rem;
   border-radius: 9px;
   font-size: 0.8rem;
-  background: var(--bg);
+  background: var(--field);
   color: var(--fg);
   box-shadow: 0 0 0 1px var(--line);
 }
@@ -1736,7 +1736,7 @@ svg.hi .ge.on .gtx {
   min-height: 30px;
   padding: 0 0.75rem;
   border-radius: 999px;
-  background: var(--bg);
+  background: var(--field);
   box-shadow: 0 0 0 1px var(--line);
   font-size: 0.82rem;
 }

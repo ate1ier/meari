@@ -1,0 +1,16 @@
+{
+  "name": "meari",
+  "private": true,
+  "description": "빌드 없이 index.html 만 올리면 되는 정적 앱이에요. 아래 도구는 개발할 때만 써요(배포에는 필요 없어요).",
+  "scripts": {
+    "format": "prettier --write \"js/*.js\" \"css/*.css\" \"supabase/functions/**/*.ts\"",
+    "format:check": "prettier --check \"js/*.js\" \"css/*.css\" \"supabase/functions/**/*.ts\"",
+    "check:order": "node tools/check-order.cjs",
+    "check": "npm run format:check && npm run check:order"
+  },
+  "devDependencies": {
+    "acorn": "^8.12.0",
+    "eslint-scope": "^8.0.0",
+    "prettier": "^3.3.0"
+  }
+}

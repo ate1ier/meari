@@ -1,14 +1,73 @@
-@keyframes pop{from{transform:translateY(30%);opacity:0}}
-@keyframes sc{from{-webkit-text-stroke-width:1.2px}}
-@keyframes wipe{from{clip-path:inset(-4% 100% -8% -1%)}to{clip-path:inset(-4% -1% -8% -1%)}}
-@keyframes unfold{from{clip-path:inset(-2px 100% -2px -2px round 24px)}to{clip-path:inset(-2px -2px -2px -2px round 24px)}}
-@keyframes soft{from{opacity:0}}
-.arrive aside>*{animation:soft .6s .7s backwards}
-.arrive .hi p{animation:wipe .8s cubic-bezier(.7,0,.2,1) .35s backwards}
-.arrive .hi h1{animation:wipe .9s cubic-bezier(.7,0,.2,1) .45s backwards}
-.arrive .cur{animation:unfold 1s cubic-bezier(.7,0,.2,1) .6s backwards}
-.arrive .cur h2 i{animation-delay:calc(var(--i)*80ms + 1.05s)}
-.arrive .cols{animation:soft .9s 1.4s backwards}
-@media(prefers-reduced-motion:reduce){*,::before,::after{animation-duration:.01ms!important;transition-duration:.01ms!important;transition-delay:0s!important}}
-@keyframes grow{from{transform:scaleY(0)}}
-.act i{transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--i)*40ms + .3s)}
+@keyframes pop {
+  from {
+    transform: translateY(30%);
+    opacity: 0;
+  }
+}
+@keyframes sc {
+  from {
+    -webkit-text-stroke-width: 1.2px;
+  }
+}
+@keyframes wipe {
+  from {
+    clip-path: inset(-4% 100% -8% -1%);
+  }
+  to {
+    clip-path: inset(-4% -1% -8% -1%);
+  }
+}
+@keyframes unfold {
+  from {
+    clip-path: inset(-2px 100% -2px -2px round 24px);
+  }
+  to {
+    clip-path: inset(-2px -2px -2px -2px round 24px);
+  }
+}
+@keyframes soft {
+  from {
+    opacity: 0;
+  }
+}
+.arrive aside > * {
+  animation: soft 0.6s 0.7s backwards;
+}
+.arrive .hi p {
+  animation: wipe 0.8s var(--e-view) 0.35s backwards;
+}
+.arrive .hi h1 {
+  animation: wipe var(--t-view) var(--e-view) 0.45s backwards;
+}
+.arrive .cur {
+  animation: unfold 1s var(--e-view) 0.6s backwards;
+}
+.arrive .cur h2 i {
+  animation-delay: calc(var(--i) * 80ms + 1.05s);
+}
+.arrive .cols {
+  animation: soft 0.9s 1.4s backwards;
+}
+/* 움직임 줄이기: 애니메이션·전환을 거의 즉시 끝내고, 지연 때문에 요소가 안 보이는 일이 없게 지연도 없애요. 부드러운 스크롤도 꺼요 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+@keyframes grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+.act i {
+  transform-origin: bottom;
+  animation: grow 0.7s var(--e-panel) backwards;
+  animation-delay: calc(var(--i) * 40ms + 0.3s);
+}

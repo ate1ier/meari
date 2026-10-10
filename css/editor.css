@@ -1,32 +1,202 @@
-.top{position:sticky;top:0;z-index:5;background:var(--paper);transition:opacity .4s}
-.tb{display:flex;align-items:center;gap:.15rem;padding:.55rem clamp(1rem,3vw,2rem);font-size:.82rem;color:var(--mute)}
-.tb .sep{width:1px;height:18px;margin:0 .35rem;background:var(--line)}
-.tb .st{margin-right:auto;display:flex;align-items:center;gap:.5rem}
-.tb .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.6}
-.tb button{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:36px;min-width:36px;padding:0 .65rem;border-radius:10px;transition:background .25s,color .25s}
-.tb button:hover{background:var(--soft);color:var(--fg)}
-.tb button[aria-pressed=true]{background:var(--act,var(--m));color:var(--actfg,#fff)}
-.stat{display:flex;gap:.8rem;margin:0 .5rem;font-variant-numeric:tabular-nums;white-space:nowrap}
-.stat button{padding:0!important;min-height:0!important}
-.gl{height:2px;background:var(--line)}
-.gl i{display:block;height:100%;width:0;background:var(--fg);transition:width .5s}
-.focus .top{opacity:0}.focus .top:hover,.focus .top:focus-within{opacity:1}
-.fb{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.4rem clamp(1rem,3vw,2rem) .7rem}
-.fb .field{width:9.5rem;min-height:36px}
-.fb button{min-height:34px;padding:0 .7rem;border-radius:10px;font-size:.82rem;color:var(--mute)}
-.fb button:hover{background:var(--soft);color:var(--fg)}
-.fb output{min-width:3rem;font-size:.8rem;color:var(--mute);font-variant-numeric:tabular-nums}
-.page{max-width:var(--ew,var(--pw));margin:0 auto;padding:clamp(2rem,6vw,4.5rem) clamp(1.25rem,4vw,2rem) 45vh}
-.num{font:800 clamp(5rem,13vw,9rem)/.85 Archivo,sans-serif;letter-spacing:-.02em;color:transparent;-webkit-text-stroke:.75px var(--mute);transition:-webkit-text-fill-color 1s}
-.done .num{-webkit-text-fill-color:var(--fg)}
-.ti{display:block;width:100%;margin:1.1rem 0 2.2rem;padding:.2rem 0;background:none;border:0;border-bottom:1px solid transparent;font-size:clamp(1.7rem,4vw,2.3rem);font-weight:800;letter-spacing:-.035em;outline:0;transition:border-color .3s}
-.ti:focus{border-color:var(--line)}.ti::placeholder{color:var(--mute)}
-#ed{outline:0;font:400 var(--fs)/var(--lh,2.05) var(--ff,"Noto Serif KR",serif);word-break:keep-all;white-space:pre-wrap;caret-color:var(--fg);min-height:40vh}
-#ed>*{text-indent:var(--pin,1em);min-height:1em;margin-bottom:var(--pgap,.4em);transition:opacity .35s}
-#ed>.sb{text-indent:0;text-align:center;letter-spacing:.6em;color:var(--mute)}
-#ed::selection,#ed *::selection{background:var(--m);color:var(--bg)}
-::highlight(f){background:rgba(176,16,111,.22)}
-::highlight(fc){background:var(--acc);color:#fff}
-.empty #ed>*:first-child{position:relative}
-.empty #ed>*:first-child::before{content:"여기에 이야기를 시작하세요";color:var(--mute);position:absolute;left:0;top:0;pointer-events:none;text-indent:0}
-.focus #ed>*:not(.on){opacity:.28}
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--paper);
+  transition: opacity var(--t-panel);
+}
+.tb {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.55rem clamp(1rem, 3vw, 2rem);
+  font-size: 0.82rem;
+  color: var(--mute);
+}
+.tb .sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 0.35rem;
+  background: var(--line);
+}
+.tb .st {
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tb .st::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+}
+.tb button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0 0.65rem;
+  border-radius: 10px;
+  transition:
+    background var(--t-hover),
+    color var(--t-hover);
+}
+.tb button:hover {
+  background: var(--soft);
+  color: var(--fg);
+}
+.tb button[aria-pressed='true'] {
+  background: var(--act, var(--m));
+  color: var(--actfg, #fff);
+}
+.stat {
+  display: flex;
+  gap: 0.8rem;
+  margin: 0 0.5rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.stat button {
+  padding: 0 !important;
+  min-height: 0 !important;
+}
+.gl {
+  height: 2px;
+  background: var(--line);
+}
+.gl i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--fg);
+  transition: width var(--t-panel);
+}
+.focus .top {
+  opacity: 0;
+}
+.focus .top:hover,
+.focus .top:focus-within {
+  opacity: 1;
+}
+.fb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem clamp(1rem, 3vw, 2rem) 0.7rem;
+}
+.fb .field {
+  width: 9.5rem;
+  min-height: 36px;
+}
+.fb button {
+  min-height: 34px;
+  padding: 0 0.7rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  color: var(--mute);
+}
+.fb button:hover {
+  background: var(--soft);
+  color: var(--fg);
+}
+.fb output {
+  min-width: 3rem;
+  font-size: 0.8rem;
+  color: var(--mute);
+  font-variant-numeric: tabular-nums;
+}
+.page {
+  max-width: var(--ew, var(--pw));
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 4.5rem) clamp(1.25rem, 4vw, 2rem) 45vh;
+}
+.num {
+  font:
+    800 clamp(5rem, 13vw, 9rem)/0.85 Archivo,
+    sans-serif;
+  letter-spacing: -0.02em;
+  color: transparent;
+  -webkit-text-stroke: 0.75px var(--mute);
+  transition: -webkit-text-fill-color 1s;
+}
+.done .num {
+  -webkit-text-fill-color: var(--fg);
+}
+.ti {
+  display: block;
+  width: 100%;
+  margin: 1.1rem 0 2.2rem;
+  padding: 0.2rem 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  outline: 0;
+  transition: border-color var(--t-hover);
+}
+.ti:focus {
+  border-color: var(--line);
+}
+.ti::placeholder {
+  color: var(--mute);
+}
+#ed {
+  outline: 0;
+  font: 400 var(--fs)/var(--lh, 2.05) var(--ff, 'Noto Serif KR', serif);
+  word-break: keep-all;
+  white-space: pre-wrap;
+  caret-color: var(--fg);
+  min-height: 40vh;
+}
+#ed > * {
+  text-indent: var(--pin, 1em);
+  min-height: 1em;
+  margin-bottom: var(--pgap, 0.4em);
+  transition: opacity var(--t-panel);
+}
+#ed > .sb {
+  text-indent: 0;
+  text-align: center;
+  letter-spacing: 0.6em;
+  color: var(--mute);
+}
+#ed::selection,
+#ed *::selection {
+  background: var(--m);
+  color: var(--bg);
+}
+::highlight(f) {
+  background: rgba(176, 16, 111, 0.22);
+}
+::highlight(fc) {
+  background: var(--acc);
+  color: var(--on-acc);
+}
+.empty #ed > *:first-child {
+  position: relative;
+}
+.empty #ed > *:first-child::before {
+  content: '여기에 이야기를 시작하세요';
+  color: var(--mute);
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  text-indent: 0;
+}
+.focus #ed > *:not(.on) {
+  opacity: 0.28;
+}
+/* 화 본문을 받는 동안(또는 받지 못했을 때) 본문 자리에 안내 */
+#ed[aria-busy='true']:empty::before {
+  content: attr(data-ph);
+  color: var(--mute);
+}

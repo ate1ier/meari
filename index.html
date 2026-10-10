@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <title>메아리</title>
-<script>try{if(JSON.parse(localStorage.getItem("meari-user")||sessionStorage.getItem("meari-user"))){var r=document.documentElement;r.dataset.theme="dark";r.classList.add("resume")}}catch(e){}</script>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
+<script src="js/boot.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=Noto+Serif+KR:wght@400&family=Noto+Sans+KR:wght@400&family=Gowun+Batang:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/base.css">
@@ -51,7 +52,7 @@
   <nav>
     <button class="ni" type="button" id="nh" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 10v10h12V10"/></svg>홈</button>
     <button class="ni" type="button" id="ne"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5"/></svg>내 원고</button>
-    <div class="sub" id="sub"><div class="subin">
+    <div class="sub"><div class="subin">
       <small>집필 중</small>
       <div class="wt" id="wt1">
         <button class="si" type="button" id="sw1" aria-expanded="false" aria-controls="kd1"><span id="sw1t">새 원고</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
@@ -63,7 +64,7 @@
       <div id="subx"></div>
     </div></div>
   </nav>
-  <div class="chsec"><div class="chh"><small id="chn">화 목록</small><button class="chm" id="chm" type="button" aria-pressed="false" title="화 삭제·순서·제목 정리">정리</button></div><small class="chsum" id="chsum"></small><nav class="chs" id="chs" aria-label="화"></nav>
+  <div class="chsec"><div class="chh"><small>화 목록</small><button class="chm" id="chm" type="button" aria-pressed="false" title="화 삭제·순서·제목 정리">정리</button></div><small class="chsum" id="chsum"></small><nav class="chs" id="chs" aria-label="화"></nav>
     <button class="add" id="add" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>새 화 추가</button></div>
   <div class="sp"></div>
   <div class="sbm"><small>빠른 메모</small>
@@ -201,7 +202,7 @@
   <div class="page" id="page">
     <div class="num" id="num" aria-hidden="true">24</div>
     <label class="sr" for="ti">화 제목</label><input class="ti" id="ti" maxlength="100" placeholder="제목 없음" autocomplete="off">
-    <div class="cmeta" id="cmeta"><div class="seg" id="cst" role="group" aria-label="이 화의 상태"></div><label class="sr" for="cgs">이 화의 목표 글자 수</label><select id="cgs" title="이 화만의 목표 글자 수"></select></div>
+    <div class="cmeta"><div class="seg" id="cst" role="group" aria-label="이 화의 상태"></div><label class="sr" for="cgs">이 화의 목표 글자 수</label><select id="cgs" title="이 화만의 목표 글자 수"></select></div>
     <div class="clk" id="clk" hidden></div>
     <div class="men" id="men" aria-label="이 화에 나온 설정"></div>
     <div id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-label="본문" aria-autocomplete="list" aria-controls="atm" spellcheck="false"></div>

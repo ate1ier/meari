@@ -5,7 +5,7 @@ function pall(){
   const a=[['홈','이동',()=>view('home')],['내 원고','이동',()=>view('works')],['세계관',wk.t,()=>view('world')],['설정집',wk.t,()=>view('codex')],['집중 모드','편집',()=>{view('edit');focusMode(!app.classList.contains('focus'))}],['맞춤법 오류 목록','편집',()=>{view('edit');spPanel(true)}],['새 원고 만들기','원고',newWork]];
   a.push(['단축키 도움말','도움말',()=>hopen(true)]);
   WORKS.filter(w=>w!==wk).forEach(w=>a.push([w.t,'원고 전환',()=>enterWork(w.id)]));
-  chs.slice().reverse().forEach(c=>a.push([c.n+'화 '+(c.t||'제목 없음'),'원고',()=>{view('edit');open(c)}]));
+  chs.slice().reverse().forEach(c=>a.push([c.n+'화 '+(c.t||'제목 없음'),'원고',()=>{view('edit');openCh(c)}]));
   [['world','세계관'],['codex','설정집']].forEach(([k,n])=>LORE[k].items.forEach(x=>x.t.trim()&&a.push([x.t,n+' · '+x.c,()=>{view(k);openLore(x)}])));
   return a;
 }
@@ -17,6 +17,7 @@ function popen(on){if(on)setMenu(false);pal.hidden=!on;if(on){pq.value='';pi=0;p
 const pgo=k=>{const i=pit[k];if(!i)return;popen(false);i[2]()};
 pq.oninput=()=>{pi=0;prender()};
 pq.onkeydown=e=>{
+  if(e.isComposing||e.keyCode===229)return;
   if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();pi=(pi+(e.key==='ArrowDown'?1:-1)+pit.length)%(pit.length||1);prender()}
   else if(e.key==='Enter'){e.preventDefault();pgo(pi)}
   else if(e.key==='Escape'){e.stopPropagation();popen(false)}

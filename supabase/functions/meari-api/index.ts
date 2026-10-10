@@ -79,7 +79,8 @@ async function exec(sb,uid,o){
     }break;
     case'ch-meta':{ /* 번호·제목·순서만(본문은 건드리지 않음) */
       const rows=rowsOf(o).map(r=>{if(!(isInt(r.id)&&r.id>0&&isInt(r.n)&&isStr(r.title,100)&&isInt(r.pos)&&isInt(r.work_id)&&r.work_id>0&&okMeta(r)))bad();return{user_id:uid,id:r.id,work_id:r.work_id,n:r.n,title:r.title,pos:r.pos,status:r.status,goal:r.goal}});
-      if(rows.length)E(await sb.from('chapters').upsert(rows,{onConflict:'user_id,id'}));
+      /* 이미 있는 화만 고쳐요(지운 화를 빈 본문으로 되살리지 않아요) — DB 함수 meari_ch_meta */
+      if(rows.length)E(await sb.rpc('meari_ch_meta',{p_uid:uid,p_rows:rows.map(({user_id,...r})=>r)}));
     }break;
     case'ch-del':if(!isInt(o.id))bad();E(await sb.from('chapters').delete().eq('user_id',uid).eq('id',o.id));break;
     case'lo':for(const r of rowsOf(o,50)){
@@ -99,9 +100,13 @@ async function exec(sb,uid,o){
       if(o.chars>0)E(await sb.from('writing_log').upsert({user_id:uid,day:o.day,chars:o.chars},{onConflict:'user_id,day'}));
       else E(await sb.from('writing_log').delete().eq('user_id',uid).eq('day',o.day));
       break;
-    case'prefs':
+    case'prefs': /* (예전 방식: 통째로 덮어쓰기. 새 화면은 prefs-merge 를 써요) */
       if(!o.data||typeof o.data!=='object'||Array.isArray(o.data)||JSON.stringify(o.data).length>15000)bad();
       E(await sb.from('user_settings').upsert({user_id:uid,data:o.data,updated_at:now()},{onConflict:'user_id'}));
+      break;
+    case'prefs-merge': /* 바뀐 키만 기존 설정에 합쳐요(DB 함수 meari_prefs_merge) */
+      if(!o.data||typeof o.data!=='object'||Array.isArray(o.data)||JSON.stringify(o.data).length>15000)bad();
+      E(await sb.rpc('meari_prefs_merge',{p_uid:uid,p_patch:o.data}));
       break;
     default:bad();
   }
@@ -174,6 +179,7 @@ export function makeHandler(sb,cfg={}){
       bad();
     }catch(e){
       if(e instanceof Http)return send(e.status,{ok:false,code:e.code});
+      if(e&&(e.code==='23503'||e.code==='23514'))return send(400,{ok:false,code:'invalid'}); /* 없는 원고를 가리키거나 DB 제약을 넘음 — 다시 보내도 소용없어요 */
       console.error('[meari-api]',e);
       return send(500,{ok:false,code:'server'});
     }

@@ -25,7 +25,7 @@ const app=$('#app'),ed=$('#ed'),ti=$('#ti'),fi=$('#fi'),ri=$('#ri');
 const rawN=c=>c._rk===c.c?c._rv:(c._rk=c.c,c._rv=raw(c.c));
 const lenN=c=>strict?(c._sk===c.c?c._sv:(c._sk=c.c,c._sv=c.c.replace(/\s/g,'').length)):rawN(c);
 const tot=()=>WORKS.reduce((s,w)=>w.chs.reduce((a,c)=>a+rawN(c),s),0); /* 오늘 쓴 양·전체 분량은 모든 원고를 합쳐요 */
-const day=new Date().toLocaleDateString('sv');
+let day=new Date().toLocaleDateString('sv'); /* 자정이 지나면 rollDay 가 바꿔요 */
 let base={d:day,s:0},lastEdit=0;
 const touch=()=>{lastEdit=Date.now();if(wk)wk.at=lastEdit}; /* base: 오늘 시작 시점의 전체 글자 수, lastEdit: 마지막 수정 시각(ms) */
 const gained=()=>'오늘 +'+fmt(Math.max(0,tot()-base.s))+'자';
@@ -33,6 +33,13 @@ const gained=()=>'오늘 +'+fmt(Math.max(0,tot()-base.s))+'자';
 const dkey=x=>x.toLocaleDateString('sv');
 let wlog={};
 function logDay(){const g=Math.max(0,tot()-base.s);if((wlog[day]||0)===g)return;if(g)wlog[day]=g;else delete wlog[day];db.log(day)}
+/* 앱을 켜 둔 채 자정을 넘기면: 어제 기록을 확정하고, 오늘 기준점(base)을 새로 잡고, 날짜·인사말·목표 표시를 다시 그려요 */
+function rollDay(){
+  const n=new Date().toLocaleDateString('sv');if(n===day||!wk)return;
+  logDay();day=n;base={d:day,s:tot()};db.pref('base',base);
+  paintDate();home();if(app.dataset.v==='works')worksHome();
+}
+setInterval(rollDay,30000);
 function toast(t,a){const e=$('#toast');e.textContent=t;e.classList.toggle('act',!!a);
   if(a){const b=document.createElement('button');b.type='button';b.textContent=a.l;b.onclick=()=>{e.classList.remove('on');a.f()};e.append(b)}
   e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),a?6000:2300)}
@@ -48,6 +55,6 @@ addEventListener('keydown',e=>{
 });
 /* 창을 닫거나 탭을 숨길 때 마지막 입력을 서버로 밀어 넣고, 아직 못 보낸 게 있으면 경고 */
 addEventListener('beforeunload',e=>{save();if(db.pending()){e.preventDefault();e.returnValue=''}});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else rollDay()});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(b){toast(b.dataset.t);setMenu(false)}});
 $('#menu').onclick=()=>setMenu(!app.classList.contains('open'));$('#scrim').onclick=()=>setMenu(false);

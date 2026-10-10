@@ -18,7 +18,7 @@ function hydrate(d){
 }
 /* 로그아웃 후 다른 계정이 들어와도 이전 데이터가 보이지 않도록 비워요 */
 function resetState(){
-  clearTimeout(timer);cur=null;le=null;chs=[];WORKS=[];wk=null;SPI=new Set();
+  clearTimeout(timer);cur=null;le=null;chs=[];WORKS=[];wk=null;uname='';SPI=new Set();
   memos=[];wlog={};lastEdit=0;base={d:day,s:0};CATS={};cmShow(false);
   ed.innerHTML='';ti.value='';fi.value='';EL.chs.innerHTML='';listHtml='';$('#fb').hidden=true;spPanel(false);
   Object.assign(OPT,OPT_DEF);size=1;fnt=0;lhi=1;gi=1;ci=1;pf=PF_DEF.slice();LONGI=1;HAB=[];

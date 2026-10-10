@@ -23,10 +23,13 @@ const ERR={
   server:'서버에 문제가 생겼어요. 잠시 후 다시 시도해 주세요.'
 };
 /* 서버 호출. 실패하면 {k:코드, t:화면용 문장, status} 를 던져요 */
+let KA=false; /* 탭을 닫거나 숨기는 중이면 true — 이때 보내는 저장 요청은 keepalive 로 보내서 페이지가 사라져도 끝까지 가요 */
 async function api(op,body){
   if(!API)throw{k:'cfg',t:ERR.cfg,status:0};
   let r;
-  try{r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op,token:authStore.getItem('meari-token')||undefined,...body})})}
+  const payload=JSON.stringify({op,token:authStore.getItem('meari-token')||undefined,...body});
+  const ka=KA&&new TextEncoder().encode(payload).length<60000; /* keepalive 요청은 본문 64KB 까지만 허용돼요 */
+  try{r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:payload,keepalive:ka})}
   catch(e){throw{k:'net',t:ERR.net,status:0}}
   let j=null;try{j=await r.json()}catch(e){}
   if(r.ok&&j&&j.ok)return j;
@@ -52,7 +55,7 @@ function enter(j,rm){
 
 /* ── 데이터 ── */
 const db=(()=>{
-  let on=false,q=[],busy=false,fails=0,subs=[],prefs={};
+  let on=false,q=[],busy=false,fails=0,subs=[],prefs={},dirty=new Set(); /* dirty: 아직 서버에 못 보낸 설정 키 */
   const emit=s=>subs.slice().forEach(f=>f(s));
   const iso=t=>new Date(t||Date.now()).toISOString();
   const chunk=(a,n)=>{const r=[];for(let i=0;i<a.length;i+=n)r.push(a.slice(i,i+n));return r};
@@ -88,6 +91,10 @@ const db=(()=>{
     fails=0;run();
   }
   addEventListener('online',()=>{fails=0;run()});
+  /* 창을 닫거나 앱이 내려갈 때: 쉬고 있는 큐를 바로 보내요(keepalive). 다시 보이면 평소대로 */
+  const urgent=()=>{KA=true;if(on&&!busy&&q.length){fails=0;run()}};
+  addEventListener('pagehide',urgent);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)urgent();else KA=false});
 
   const rowWk=W=>({id:W.id,title:W.t,pos:W.pos});
   const rowCh=(c,i)=>({id:c.id,n:c.n,title:c.t,body:c.c,pos:i,work_id:c.w,status:c.s||'draft',goal:c.g||0});
@@ -100,7 +107,7 @@ const db=(()=>{
     await api('write',{ops:[
       {t:'wk',rows:[rowWk(W)]},{t:'ch',rows:W.chs.map(rowCh)},
       ...(memos0.length?[{t:'me',rows:memos0.map(m=>({id:m.id,t:m.t,at:iso(m.at)}))}]:[]),
-      {t:'prefs',data:{cur:id}}   /* 마지막에 넣어서 "준비 끝" 표시로 씀 */
+      {t:'prefs-merge',data:{cur:id}}   /* 마지막에 넣어서 "준비 끝" 표시로 씀 */
     ]});
     return{works:[W],memos:memos0,wlog:{},prefs:{cur:id},lastEdit:0};
   }
@@ -113,8 +120,10 @@ const db=(()=>{
       q=[];busy=false;fails=0;
       const j=await api('load');
       on=true;
-      if(!j.settings){const d=await seed();prefs=d.prefs;return{...d,user:j.user}}
-      prefs=j.settings.data||{};
+      /* 정말 빈 계정(설정도, 원고·화·설정집도 없음)일 때만 기본 내용을 채워요. 가입 직후 seed 가 중간에 끊겼거나 설정 행만 없는 경우엔 있는 글을 그대로 쓰고, 빠진 것은 아래에서 채워요 */
+      const empty=!j.settings&&!(j.works||[]).length&&!j.chapters.length&&!j.lore.length;
+      if(empty){const d=await seed();prefs=d.prefs;return{...d,user:j.user}}
+      prefs=(j.settings&&j.settings.data)||{};
       const wlog={};j.log.forEach(r=>{wlog[r.day]=r.chars});
       const ws=(j.works||[]).map(r=>({id:r.id,t:r.title,pos:r.pos,at:new Date(r.updated_at).getTime()||0,chs:[],world:[],codex:[]}));
       /* 원고 여러 개 기능이 생기기 전에 쓴 글(work_id 0)은 첫 원고로 옮겨 담아요 */
@@ -146,7 +155,7 @@ const db=(()=>{
       const f=s=>{if(s==='saved'||s==='error'||s==='expired'){subs=subs.filter(x=>x!==f);s==='saved'?res():rej(new Error('save'))}};
       subs.push(f);fails=0;run();
     })},
-    reset(){on=false;q=[];busy=false;fails=0;prefs={}},
+    reset(){on=false;q=[];busy=false;fails=0;prefs={};dirty.clear()},
 
     /* 원고(작품) — 만들기·제목 바꾸기, 통째로 삭제(화·세계관·설정집 포함)와 되돌리기 */
     work(W){enqueue('wk:'+W.id,()=>WORKS.includes(W)?w([{t:'wk',rows:[rowWk(W)]}]):null)},
@@ -168,6 +177,13 @@ const db=(()=>{
 
     log(d){enqueue('log:'+d,()=>w([{t:'log',day:d,chars:wlog[d]||0}]))},
 
-    pref(k,v){prefs[k]=v;enqueue('prefs',()=>w([{t:'prefs',data:prefs}]))}
+    /* 설정은 바뀐 키만 보내요. 서버가 기존 설정에 합치므로 다른 기기에서 바꾼 다른 키는 지워지지 않아요 */
+    pref(k,v){
+      prefs[k]=v;dirty.add(k);
+      enqueue('prefs',()=>{
+        const ks=[...dirty],patch={};ks.forEach(x=>patch[x]=prefs[x]);
+        return w([{t:'prefs-merge',data:patch}]).then(()=>ks.forEach(x=>dirty.delete(x)));
+      });
+    }
   };
 })();

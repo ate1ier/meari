@@ -83,7 +83,7 @@ function switchWork(w){
   if(cur){clearTimeout(timer);save()}
   if(le)closeLore();
   if(app.classList.contains('focus'))focusMode(false);
-  setWork(w);if(fi.value)find();
+  setWork(w);if(fi.value)findText();
   paintWorks();counts();home();repaintCards();
 }
 function enterWork(id){
@@ -301,7 +301,7 @@ $('#lll').addEventListener('change',e=>{
 function lkGo(k,id){
   const o=tgt(k,id);if(!o)return;
   closeLore();
-  if(k==='ch'){view('edit');open(o)}
+  if(k==='ch'){view('edit');openCh(o)}
   else{view(k);openLore(o)}
 }
 $('#llk').addEventListener('click',e=>{

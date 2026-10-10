@@ -1,10 +1,7 @@
 -- 메아리 Supabase 스키마 (이메일 없는 아이디 로그인 버전)
 -- 대시보드 → SQL Editor 에 통째로 붙여 넣고 Run.
---
--- ⚠ 맨 위의 drop 은 이전 버전(auth.users 기반) 테이블을 지우는 줄이에요.
---    새 프로젝트이거나 이전 테이블에 지워도 되는 데이터만 있을 때만 실행하세요.
-drop table if exists public.works, public.chapters, public.lore_items, public.memos,
-  public.writing_log, public.user_settings cascade;
+-- 데이터를 지우는 줄은 없어요. 여러 번 실행해도 안전해요(create ... if not exists).
+-- 이전 버전(auth.users 기반) 테이블을 지우고 처음부터 다시 만들고 싶을 때만 schema_reset.sql 을 먼저 실행하세요.
 
 -- 계정: 아이디 + 암호 해시(PBKDF2). 암호 원문은 어디에도 저장되지 않아요.
 create table if not exists public.meari_users (
@@ -104,3 +101,32 @@ revoke all on sequence public.meari_attempts_id_seq from anon, authenticated;
 
 create index if not exists chapters_work on public.chapters(user_id, work_id, pos);
 create index if not exists lore_items_work on public.lore_items(user_id, work_id, pos);
+
+-- 화·설정집 항목은 같은 사용자의 원고(works)를 가리켜야 해요. 원고를 지우면 딸린 행도 함께 지워져요.
+-- NOT VALID: 원고 기능 이전에 쓴 글(work_id 0)은 그대로 두고, 새로 쓰거나 고치는 행부터 검사해요.
+do $$ begin
+  alter table public.chapters add constraint chapters_work_fk
+    foreign key (user_id, work_id) references public.works(user_id, id) on delete cascade not valid;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter table public.lore_items add constraint lore_items_work_fk
+    foreign key (user_id, work_id) references public.works(user_id, id) on delete cascade not valid;
+exception when duplicate_object then null; end $$;
+
+-- 설정 합치기 · 화 메타 고치기 함수(Edge Function 이 호출해요)
+create or replace function public.meari_prefs_merge(p_uid uuid, p_patch jsonb) returns void
+language sql as $$
+  insert into public.user_settings(user_id, data, updated_at) values (p_uid, p_patch, now())
+  on conflict (user_id) do update set data = public.user_settings.data || excluded.data, updated_at = now();
+$$;
+create or replace function public.meari_ch_meta(p_uid uuid, p_rows jsonb) returns void
+language sql as $$
+  update public.chapters c
+     set work_id = r.work_id, n = r.n, title = r.title, pos = r.pos, status = r.status, goal = r.goal
+    from jsonb_to_recordset(p_rows) as r(id bigint, work_id bigint, n int, title text, pos int, status text, goal int)
+   where c.user_id = p_uid and c.id = r.id;
+$$;
+revoke all on function public.meari_prefs_merge(uuid, jsonb) from public, anon, authenticated;
+revoke all on function public.meari_ch_meta(uuid, jsonb) from public, anon, authenticated;
+grant execute on function public.meari_prefs_merge(uuid, jsonb) to service_role;
+grant execute on function public.meari_ch_meta(uuid, jsonb) to service_role;

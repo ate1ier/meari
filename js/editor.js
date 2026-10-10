@@ -28,11 +28,11 @@ function save(){
   logDay();list()
 }
 function later(){touch();EL.st.textContent='저장 중…';clearTimeout(timer);timer=setTimeout(save,700)}
-function open(c){
+function openCh(c){
   if(cur){clearTimeout(timer);save()}
   cur=c;$('#num').textContent=c.n;ti.value=c.t;
   ed.innerHTML=c.c.split('\n').map(l=>`<div>${l?esc(l):'<br>'}</div>`).join('');
-  list(true);paintCmeta();stats();mark();if(fi.value)find();scrollTo(0,0);
+  list(true);paintCmeta();stats();mark();if(fi.value)findText();scrollTo(0,0);
 }
 function mark(){
   const s=getSelection().anchorNode;let el=s&&ed.contains(s)?(s.nodeType===3?s.parentNode:s):null;
@@ -40,7 +40,7 @@ function mark(){
   ed.querySelectorAll('.on').forEach(x=>x.classList.remove('on'));
   if(el&&el!==ed){el.classList.add('on');return el}
 }
-function edited(){stats();later();if(fi.value)find(true)}
+function edited(){rollDay();stats();later();if(fi.value)findText(true)}
 ed.addEventListener('beforeinput',e=>{
   if(!OPT.q||e.inputType!=='insertText'||(e.data!=='"'&&e.data!=="'"))return;
   const r=getSelection().getRangeAt(0),nd=r.startContainer,prev=nd.nodeType===3?nd.data[r.startOffset-1]:'';
@@ -57,9 +57,9 @@ ed.addEventListener('input',e=>{
 ed.addEventListener('paste',e=>{e.preventDefault();document.execCommand('insertText',false,(e.clipboardData||window.clipboardData).getData('text/plain'))});
 document.addEventListener('selectionchange',mark);
 ti.addEventListener('input',()=>{cur.t=ti.value.trim();later()});
-ti.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();ed.focus()}});
+ti.addEventListener('keydown',e=>{if(e.isComposing||e.keyCode===229)return;if(e.key==='Enter'){e.preventDefault();ed.focus()}});
 let ranges=[],ai=0;
-function find(keep){
+function findText(keep){
   ranges=[];const q=fi.value.toLowerCase();
   if(q){const w=document.createTreeWalker(ed,NodeFilter.SHOW_TEXT);let nd;
     while(nd=w.nextNode()){const t=nd.data.toLowerCase();let i=0;
@@ -76,15 +76,15 @@ function step(x){if(!ranges.length)return;ai=(ai+x+ranges.length)%ranges.length;
 function rep(all){
   if(!ranges.length)return;const rv=ri.value,k=ranges.length;
   (all?[...ranges].reverse():[ranges[ai]]).forEach(r=>{r.deleteContents();r.insertNode(document.createTextNode(rv))});
-  ed.normalize();edited();find();if(all)toast(k+'곳을 바꿨어요.');
+  ed.normalize();edited();findText();if(all)toast(k+'곳을 바꿨어요.');
 }
 function findBar(on){
   $('#fb').hidden=!on;$('#fdb').setAttribute('aria-expanded',on);
-  if(on){const s=getSelection().toString();if(s&&!s.includes('\n'))fi.value=s;fi.focus();fi.select();find()}else{fi.value='';find();ed.focus()}
+  if(on){const s=getSelection().toString();if(s&&!s.includes('\n'))fi.value=s;fi.focus();fi.select();findText()}else{fi.value='';findText();ed.focus()}
 }
 $('#fdb').onclick=()=>findBar($('#fb').hidden);$('#fx').onclick=()=>findBar(false);
-fi.oninput=()=>{ai=0;find()};
-fi.onkeydown=ri.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();e.target===ri?rep(false):step(e.shiftKey?-1:1)}};
+fi.oninput=()=>{ai=0;findText()};
+fi.onkeydown=ri.onkeydown=e=>{if(e.isComposing||e.keyCode===229)return;if(e.key==='Enter'){e.preventDefault();e.target===ri?rep(false):step(e.shiftKey?-1:1)}};
 $('#fnx').onclick=()=>step(1);$('#fpv').onclick=()=>step(-1);$('#r1').onclick=()=>rep(false);$('#ra').onclick=()=>rep(true);
 const persist=()=>{touch();db.chapters(wk)}; /* 순서·번호·제목 변경은 전체 목록을 한 번에 저장 */
 const renum=()=>{chs.forEach((c,i)=>c.n=i+1); /* 화 번호는 원고마다 1, 2, 3… 으로 이어져요 */if(cur)$('#num').textContent=cur.n};
@@ -97,15 +97,15 @@ function chEndRn(ok){
 }
 function chMove(c,d){
   const i=chs.indexOf(c),j=i+d;if(j<0||j>=chs.length)return;
-  const b=chs[0].n;[chs[i],chs[j]]=[chs[j],chs[i]];renum(b);persist();list(true);chFocus(c.id,d<0?'up':'dn');
+  [chs[i],chs[j]]=[chs[j],chs[i]];renum();persist();list(true);chFocus(c.id,d<0?'up':'dn');
 }
 function chDel(c){
   if(chs.length<2){toast('마지막 한 화는 지울 수 없어요.');chDq=null;list(true);return}
-  const i=chs.indexOf(c),b=chs[0].n,sz=rawN(c),nn=c.n;
-  chs.splice(i,1);renum(b);base.s=Math.max(0,base.s-sz);db.pref('base',base);db.delChapter(c.id);persist();chDq=null;
-  if(c===cur){clearTimeout(timer);cur=null;open(chs[Math.min(i,chs.length-1)])}else list(true);
+  const i=chs.indexOf(c),sz=rawN(c),nn=c.n;
+  chs.splice(i,1);renum();base.s=Math.max(0,base.s-sz);db.pref('base',base);db.delChapter(c.id);persist();chDq=null;
+  if(c===cur){clearTimeout(timer);cur=null;openCh(chs[Math.min(i,chs.length-1)])}else list(true);
   toast(nn+'화를 삭제했어요.',{l:'되돌리기',f:()=>{
-    if(chs.includes(c))return;chs.splice(Math.min(i,chs.length),0,c);renum(b);base.s+=sz;db.pref('base',base);persist();db.chapter(c);open(c);
+    if(chs.includes(c))return;chs.splice(Math.min(i,chs.length),0,c);renum();base.s+=sz;db.pref('base',base);persist();db.chapter(c);openCh(c);
   }});
 }
 $('#chs').onclick=e=>{
@@ -122,7 +122,7 @@ $('#chs').onclick=e=>{
   const b=e.target.closest('.ch');if(!b)return;const c=chs.find(c=>c.id==b.dataset.id);
   if(e.detail===2){chRename(c);return}/* 더블클릭: 첫 클릭이 목록을 다시 그리므로 dblclick 대신 click 횟수로 판단 */
   if(app.dataset.v!=='edit')view('edit');   /* 설정·홈 화면에서 화를 누르면 에디터로 들어가요 */
-  open(c);setMenu(false);
+  openCh(c);setMenu(false);
 };
 $('#chs').addEventListener('keydown',e=>{
   if(!e.target.classList.contains('rn'))return;
@@ -132,7 +132,7 @@ $('#chs').addEventListener('keydown',e=>{
 });
 $('#chs').addEventListener('focusout',e=>{if(e.target.classList.contains('rn'))chEndRn(true)});
 $('#chm').onclick=()=>{const on=$('#chm').getAttribute('aria-pressed')!=='true';$('#chm').setAttribute('aria-pressed',on);$('#chs').classList.toggle('mg',on)};
-$('#add').onclick=()=>{if(app.dataset.v!=='edit')view('edit');save();const c={id:Date.now(),n:chs.length+1,t:'',c:'',s:'draft',g:0,w:wk.id,_sig:'\0'};chs.push(c);persist();open(c);setMenu(false);ti.focus()};
+$('#add').onclick=()=>{if(app.dataset.v!=='edit')view('edit');save();const c={id:Date.now(),n:chs.length+1,t:'',c:'',s:'draft',g:0,w:wk.id,_sig:'\0'};chs.push(c);db.chapter(c);persist();openCh(c);setMenu(false);ti.focus()};
 $('#cm').onclick=()=>{strict=!strict;stats();list(true);selc();toast(strict?'공백 제외로 셉니다.':'공백 포함으로 셉니다.')};
 function setSize(i,keep=true){size=Math.max(0,Math.min(SIZES.length-1,i));document.documentElement.style.setProperty('--fs',SIZES[size]+'rem');if(keep)db.pref('size',size)}
 $('#fm').onclick=()=>setSize(size-1);$('#fp').onclick=()=>setSize(size+1);setSize(size,false);
@@ -483,7 +483,7 @@ $('#spp').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault()
 $('#spl').onclick=e=>{
   const b=e.target.closest('button');if(!b)return;
   const c=chs.find(x=>x.id==b.dataset.c);if(!c)return;
-  if(c!==cur)open(c);
+  if(c!==cur)openCh(c);
   scan();
   const i=+b.dataset.i,s=+b.dataset.s,t=b.dataset.t;let nd=null,off=0;
   const line=ed.children[i];

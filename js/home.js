@@ -10,7 +10,7 @@ function view(v){
   ['home','works','wall','edit','lore'].forEach(p=>$('#'+p).hidden=p!==PANE[v]);
   Object.entries(NAV).forEach(([id,k])=>$('#'+id).setAttribute('aria-current',(v===k||(k==='works'&&v==='all'))?(id==='nh'||id==='ne'?'page':'true'):'false'));
   $('#sw1').dataset.in=(v==='world'||v==='codex');if(v==='world'||v==='codex')kids(true);
-  if(v==='edit'&&!cur)open(chs[chs.length-1]);
+  if(v==='edit'&&!cur)openCh(chs[chs.length-1]);
   if(v==='edit')scan();
   if(v==='home')home();
   if(v==='works')worksHome();
@@ -29,9 +29,14 @@ function home(){
 }
 $('#nh').onclick=()=>view('home');$('#ne').onclick=()=>view('works');$('#sw1').onclick=()=>{if(app.dataset.v==='edit')kids($('#wt1').dataset.open!=='true');else{view('edit');kids(true)}};$('#nwd').onclick=()=>view('world');$('#ncd').onclick=()=>view('codex');
 $('#resume').onclick=()=>view('edit');
-const d=new Date(),h=d.getHours();
-$('#dt').textContent=d.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'long'});
-const setUser=u=>{$('#gr').textContent=(h<5?'늦은 밤이에요':h<11?'좋은 아침이에요':h<17?'좋은 오후예요':'좋은 저녁이에요')+', '+u+'.';$('#me').textContent=u};
+let uname='';
+function paintDate(){ /* 날짜·인사말: 로그인할 때와 날짜가 바뀔 때 다시 그려요 */
+  const d=new Date(),h=d.getHours();
+  $('#dt').textContent=d.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'long'});
+  if(uname)$('#gr').textContent=(h<5?'늦은 밤이에요':h<11?'좋은 아침이에요':h<17?'좋은 오후예요':'좋은 저녁이에요')+', '+uname+'.';
+}
+const setUser=u=>{uname=u;$('#me').textContent=u;paintDate()};
+paintDate();
 let memos=[]; /* {id,t,at} — 서버에서 읽어 온 메모는 hydrate 가 채워요 */
 const memoLi=(m,i)=>`<li><span>${esc(m.t)}</span><small>${ago(m.at)}</small><button type="button" data-i="${i}" aria-label="메모 삭제"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></li>`;
 function notes(){

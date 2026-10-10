@@ -274,6 +274,12 @@ $('#flo').onclick=e=>{const b=e.target.closest('button');if(!b)return;lhi=+b.dat
 $('#frs').onclick=()=>{fnt=0;lhi=1;db.pref('font',0);db.pref('lh',1);paintFmt();$('#fo').focus()};
 document.addEventListener('click',e=>{const p=e.composedPath();if(!$('#fpn').hidden&&!p.includes($('#fpn'))&&!p.includes($('#fo')))fontPanel(false)});
 paintFmt();
+/* 패널 탭(보기·도우미)과 도구줄 지표 더 보기 */
+function panelTab(t){$('#ptv').hidden=t!=='v';$('#pta').hidden=t!=='a';$('#ptb').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.pt===t))}
+$('#ptb').onclick=e=>{const b=e.target.closest('button');if(b)panelTab(b.dataset.pt)};
+function statMore(on){$('#stx').hidden=!on;$('#sm').setAttribute('aria-expanded',on);$('#sm').textContent=on?'접기':'더 보기';try{localStorage.setItem('meari-sm',on?'1':'')}catch(_){}}
+$('#sm').onclick=()=>statMore($('#stx').hidden);
+try{statMore(!!localStorage.getItem('meari-sm'))}catch(_){}
 
 /* 설정 이름 표시 · 표기 점검 · 반복 표현 점검 */
 let lgHits=[],hits=[],sph=[],spN=0,SPI=new Set(),scT,repN=0,patKey='',pats=[],blkC=new WeakMap(),blkSig='';
@@ -388,7 +394,12 @@ $('#tgl').innerHTML=TOG.map(([k,n,d])=>`<button type="button" role="switch" data
 function paintOpt(){
   paintSp();
   TOG.forEach(([k,n,d])=>{const b=$(`#tgl [data-k="${k}"]`);b.setAttribute('aria-checked',!!OPT[k]);$('#tg-'+k).textContent=k==='rep'&&OPT.rep?(repN?repN+'곳 표시 중':'반복되는 표현이 없어요'):k==='sp'&&OPT.sp?(spN?spN+'곳 확인해 보세요':'틀린 표현이 없어요'):k==='long'&&OPT.long?(longN?longN+'개 문장이 '+LONGS[LONGI]+'자를 넘어요':'긴 문장이 없어요'):k==='hab'&&OPT.hab&&HAB.length?(habC.reduce((a,b)=>a+b,0)+'곳 표시 중'):d});
-  paintHab();
+  paintHab();paintLg();
+}
+function paintLg(){
+  const n=['hl','sp','rep','long','hab'].filter(k=>OPT[k]).length;
+  document.documentElement.toggleAttribute('data-dense',n>=3); /* 표시를 3가지 이상 켜면 색을 연하게 */
+  $('#lgd').querySelectorAll('li').forEach(li=>li.classList.toggle('off',!OPT[li.dataset.k]));
 }
 function paintSp(){$('#spt').textContent=OPT.sp&&spN?'맞춤법 '+spN:'맞춤법'}
 $('#tgl').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=b.dataset.k;OPT[k]=OPT[k]?0:1;db.pref('opt',{...OPT});if(k==='hl'||k==='sp')ltHide();if(k==='tw'&&OPT.tw)twScroll();scan()};

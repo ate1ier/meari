@@ -125,14 +125,17 @@
 <main id="lore" hidden>
   <div id="lol">
     <div class="hi"><p id="lop">내 원고 · 새 원고</p><h1 id="lot"></h1></div>
-    <div class="lbar"><div class="chips" id="loc" role="group" aria-label="분류"></div><div class="lbtn"><button class="mng" id="lcb" type="button" aria-expanded="false" aria-controls="lcm">분류 편집</button><button class="addl" id="loa" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>새 항목</button></div></div>
+    <div class="lbar"><div class="chips" id="loc" role="group" aria-label="분류"></div><div class="lbtn"><div class="seg lmo" id="lmo" role="group" aria-label="보기 방식"><button type="button" data-m="cards" aria-pressed="true">카드</button><button type="button" data-m="graph" aria-pressed="false">관계도</button><button type="button" data-m="time" aria-pressed="false">타임라인</button><button type="button" data-m="map" aria-pressed="false">지도</button></div><button class="mng" id="lcb" type="button" aria-expanded="false" aria-controls="lcm">분류 편집</button><button class="addl" id="loa" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>새 항목</button></div></div>
     <div class="lcm" id="lcm" hidden></div>
     <div class="cards" id="log"></div>
+    <div class="lgv" id="lgv" hidden></div>
   </div>
   <div class="lpage" id="lod" hidden>
     <button class="back" id="lob" type="button"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span></span></button>
     <div class="chips" id="lodc" role="group" aria-label="분류"></div>
     <label class="sr" for="loti">이름</label><input class="ti" id="loti" maxlength="100" placeholder="이름을 붙여 주세요" autocomplete="off">
+    <label class="sr" for="lodt">날짜</label><input class="cin" id="lodt" maxlength="30" placeholder="날짜 (예: 120년 3월, 제3기 4년) — 타임라인에 쓰여요" autocomplete="off">
+    <div class="lim" id="lim"><button type="button" class="limb" id="limb" aria-label="이미지 올리기"></button><div class="limt"><b>이미지</b><small>인물 카드·관계도에 보여요. 정사각형으로 잘라 작게 줄여 저장해요.</small><button type="button" id="limx" hidden>이미지 지우기</button></div><input type="file" id="limf" accept="image/*" hidden></div>
     <label class="sr" for="lobd">내용</label><textarea id="lobd" placeholder="설정을 자유롭게 적어 두세요" spellcheck="false"></textarea>
     <section class="llk" id="llk" aria-label="연결">
       <div class="llh"><h2>연결</h2><button id="lla" type="button" aria-expanded="false" aria-controls="llp">+ 연결 추가</button></div>
@@ -153,7 +156,7 @@
   <div class="top">
     <div class="tb">
       <span class="st" id="st" role="status">저장됨</span>
-      <span class="stat"><span class="sel" id="sel" hidden></span><span class="td" id="td"></span><button id="cm" type="button" title="공백 포함/제외 전환"><span id="cnt">0자</span></button><span class="rt" id="rt" hidden></span><span class="rd" id="rd" hidden></span><span class="mae" id="mae"></span></span>
+      <span class="stat"><button id="cm" type="button" title="공백 포함/제외 전환"><span id="cnt">0자</span></button><button id="sm" type="button" aria-expanded="false" aria-controls="stx" aria-label="지표 더 보기" title="원고지 매수·오늘 쓴 양·읽는 시간 등">더 보기</button><span class="stx" id="stx" hidden><span class="sel" id="sel" hidden></span><span class="td" id="td"></span><span class="rt" id="rt" hidden></span><span class="rd" id="rd" hidden></span><span class="mae" id="mae"></span></span></span>
       <button id="spb" type="button" aria-expanded="false" aria-controls="spp" title="맞춤법 오류 목록 · F8 다음 오류, Shift+F8 이전 오류"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15l3-8 3 8M5.2 12.5h3.6M13 19c1.2-1.2 2.3-1.2 3.5 0s2.3 1.2 3.5 0"/></svg><span id="spt">맞춤법</span></button>
       <button id="mo" type="button" aria-expanded="false" aria-controls="mp" title="빠른 메모"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v10l-6 6H5zM13 20v-6h6"/></svg><span>메모</span></button>
       <button id="fdb" type="button" aria-expanded="false" title="찾기·바꾸기 (Ctrl/⌘+F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4"/></svg><span>찾기</span></button>
@@ -162,6 +165,8 @@
       <button id="fp" type="button" aria-label="글자 크게" title="글자 크게"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19l5-13 5 13M5 14h6M19 9v6M16 12h6"/></svg></button>
       <button id="fo" type="button" aria-expanded="false" aria-controls="fpn" aria-label="글꼴, 줄간격, 글쓰기 도우미" title="글꼴 · 줄간격 · 문단 · 글쓰기 도우미"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"/></svg></button>
       <div class="fpn" id="fpn" role="group" aria-label="글꼴, 줄간격, 글쓰기 도우미" hidden>
+        <div class="seg ptb" id="ptb" role="group" aria-label="패널 구분"><button type="button" data-pt="v" aria-pressed="true">보기</button><button type="button" data-pt="a" aria-pressed="false">도우미</button></div>
+        <div id="ptv">
         <p>글꼴</p><div class="opt" id="ffo"></div>
         <p>줄간격</p><div class="opt" id="flo"></div>
         <button class="rs" id="frs" type="button">글꼴·줄간격 기본값</button>
@@ -172,11 +177,16 @@
         <p>들여쓰기</p><div class="opt" id="pfi"></div>
         <p>문단 간격</p><div class="opt" id="pfg"></div>
         <p>줄 폭</p><div class="opt" id="pfw"></div>
-        <p class="hd">글쓰기 도우미</p><div class="tg" id="tgl"></div>
+        </div>
+        <div id="pta" hidden>
+        <p>색 표시 안내 <small>(켜 둔 표시만 본문에 나와요)</small></p>
+        <ul class="lgd" id="lgd"><li data-k="hl"><span class="lw w1">설정</span>설정 이름 · 밑줄</li><li data-k="sp"><span class="lw w2">맞춤</span>맞춤법 · 파랑 물결선</li><li data-k="long"><span class="lw w3">문장</span>긴 문장 · 주황 점선</li><li data-k="hab"><span class="lw w4">정말</span>습관어 · 연보라</li><li data-k="rep"><span class="lw w5">반복</span>반복 표현 · 연노랑</li></ul>
+        <div class="tg" id="tgl"></div>
         <p>긴 문장 기준</p><div class="opt" id="lno"></div>
         <p>습관어 <small>(자주 쓰는 말을 등록하면 본문에 표시해요)</small></p>
         <form id="habf" class="habf"><label class="sr" for="habi">습관어</label><input class="field" id="habi" maxlength="20" placeholder="예: 정말, 그저, 어느새 + Enter" autocomplete="off"></form>
         <ul class="hab" id="habl"></ul>
+        </div>
       </div>
       <button id="fc" type="button" aria-pressed="false">집중</button>
     </div>

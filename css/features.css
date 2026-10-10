@@ -173,3 +173,29 @@ aside .logo{box-shadow:0 1px 0 rgba(247,246,243,.1)}
 .hr>span:last-child{display:flex;gap:.3rem;flex:none}
 .hbox kbd{font:600 .74rem Archivo,sans-serif;padding:.25rem .55rem;border-radius:7px;background:var(--soft);box-shadow:0 0 0 1px var(--line)}
 .hn{font-size:.8rem;color:var(--mute)}
+
+/* 도구줄 지표 더 보기 */
+.stx{display:flex;flex-wrap:wrap;gap:.8rem}.stx[hidden]{display:none}
+#sm{padding:0 .4rem!important;min-height:28px!important;font-size:.76rem;border-radius:8px;color:var(--mute)}
+/* 패널 탭 */
+.ptb{display:flex;margin-bottom:.9rem}.ptb button{flex:1}
+#fpn .ptb{position:sticky;top:-1rem;z-index:1;margin:-1rem -1rem .9rem;padding:.6rem 1rem;border-radius:18px 18px 0 0;background:var(--paper)}
+#pta>p:first-child{margin-top:0}
+/* 색 범례 */
+.lgd{list-style:none;margin:0 0 1rem;padding:0;display:grid;gap:.35rem;font-size:.8rem;color:var(--mute)}
+.lgd li{display:flex;align-items:center;gap:.6rem;transition:opacity .25s}.lgd li.off{opacity:.38}
+.lw{min-width:3rem;padding:0 .3rem;color:var(--fg);text-align:center}
+.w1{text-decoration:underline;text-decoration-color:var(--acc);text-underline-offset:.3em}
+.w2{text-decoration:underline wavy #3b82f6;text-underline-offset:.3em}
+.w3{text-decoration:underline dotted #e8590c;text-decoration-thickness:2px;text-underline-offset:.3em}
+.w4{background:rgba(124,92,255,.18)}.w5{background:rgba(240,170,0,.2)}
+:root[data-theme=dark] .w4{background:rgba(160,140,255,.28)}:root[data-theme=dark] .w5{background:rgba(240,190,70,.2)}
+/* 표시를 3가지 이상 켜면 채도를 낮춰요 */
+:root[data-dense]::highlight(lore){text-decoration-color:color-mix(in srgb,var(--acc) 50%,transparent)}
+:root[data-dense]::highlight(lov){text-decoration-color:rgba(229,72,77,.5)}
+:root[data-dense]::highlight(sp){text-decoration-color:rgba(59,130,246,.5)}
+:root[data-dense]::highlight(long){text-decoration-color:rgba(232,89,12,.45);text-decoration-thickness:1px}
+:root[data-dense]::highlight(rep){background:rgba(240,170,0,.1)}
+:root[data-dense]::highlight(hab){background:rgba(124,92,255,.1)}
+:root[data-theme=dark][data-dense]::highlight(rep){background:rgba(240,190,70,.12)}
+:root[data-theme=dark][data-dense]::highlight(hab){background:rgba(160,140,255,.16)}

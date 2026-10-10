@@ -164,20 +164,40 @@ $('#works').onclick=$('#wall').onclick=e=>{
   if(b.dataset.id)openLore(L().items.find(x=>x.id==b.dataset.id));
 };
 
+const imgOk=v=>typeof v==='string'&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(v);
+let lm='cards'; /* 보기 방식: cards · graph(관계도) · time(타임라인) · map(지도) */
 function lore(k){
   if(le)closeLore();
-  lk=k;lf='전체';$('#lot').textContent=L().name;$('#lol').hidden=false;$('#lod').hidden=true;cmShow(false);paintLore();
+  lk=k;lf='전체';lm='cards';$('#lot').textContent=L().name;$('#lol').hidden=false;$('#lod').hidden=true;cmShow(false);paintLore();
 }
 function paintLore(){
   const l=L(),it=l.items.filter(x=>lf==='전체'||x.c===lf);
   $('#loc').innerHTML=chips(['전체',...l.cats],lf);
-  $('#log').innerHTML=it.length?it.map(x=>`<button class="card" type="button" data-id="${x.id}"><small>${esc(x.c)}${badges(x)}</small><b>${esc(x.t)||'제목 없음'}</b><span>${esc(x.b)}</span></button>`).join(''):'<p class="none">아직 항목이 없어요. 새 항목으로 첫 설정을 적어 보세요.</p>';
+  $('#log').innerHTML=it.length?it.map(x=>`<button class="card${imgOk(x.i)?' hv':''}" type="button" data-id="${x.id}">${imgOk(x.i)?`<img class="cav" src="${x.i}" alt="">`:''}<small>${esc(x.c)}${badges(x)}</small><b>${esc(x.t)||'제목 없음'}</b><span>${esc(x.b)}</span></button>`).join(''):'<p class="none">아직 항목이 없어요. 새 항목으로 첫 설정을 적어 보세요.</p>';
+  $('#log').hidden=lm!=='cards';$('#lgv').hidden=lm==='cards';$('#lmo').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===lm));({graph:paintGraph,time:paintTime,map:paintMap})[lm]?.();
+}
+/* 관계도: 지금 보는 분류의 항목을 점으로, 항목 연결(links)을 선으로 그려요. 화로 가는 연결은 빼고 항목끼리만 이어요 */
+function paintGraph(){
+  const its=L().items.filter(x=>lf==='전체'||x.c===lf).slice(0,60),ids=new Set(its.map(x=>x.id)),E=[],seen=new Set();
+  its.forEach(x=>(x.l||[]).forEach(o=>{if(o.k!==lk||o.id===x.id||!ids.has(o.id))return;const key=[x.id,o.id].sort().join('-')+'|'+(o.r||'');if(!seen.has(key)){seen.add(key);E.push([x.id,o.id,o.r||''])}}));
+  const box=$('#lgv');
+  if(!its.length){box.innerHTML='<p class="none">그릴 항목이 없어요.</p>';return}
+  if(!E.length){box.innerHTML='<p class="none">이 분류에는 항목끼리 이은 연결이 아직 없어요. 항목 상세의 "연결"에서 서로 이어 보세요.</p>';return}
+  const n=its.length,P=its.map((x,i)=>({x,px:360+Math.cos(i/n*6.283)*180,py:240+Math.sin(i/n*6.283)*150,dx:0,dy:0,d:0})),ix=new Map(P.map(q=>[q.x.id,q]));
+  E.forEach(([a,b])=>{ix.get(a).d++;ix.get(b).d++});
+  for(let t=0;t<250;t++){const c=1-t/250;
+    P.forEach(a=>{a.dx=(360-a.px)*.01;a.dy=(240-a.py)*.01;P.forEach(b=>{if(a===b)return;const ex=a.px-b.px,ey=a.py-b.py,d=Math.hypot(ex,ey)||1,f=30000/(d*d);a.dx+=ex/d*f;a.dy+=ey/d*f})});
+    E.forEach(([s0,u])=>{const a=ix.get(s0),b=ix.get(u),ex=b.px-a.px,ey=b.py-a.py,d=Math.hypot(ex,ey)||1,f=(d-120)*.04;a.dx+=ex/d*f;a.dy+=ey/d*f;b.dx-=ex/d*f;b.dy-=ey/d*f});
+    P.forEach(a=>{const m=Math.hypot(a.dx,a.dy)||1,st=Math.min(m,12*c+1);a.px=Math.min(670,Math.max(50,a.px+a.dx/m*st));a.py=Math.min(440,Math.max(30,a.py+a.dy/m*st))})}
+  const nm=x=>{const t=((x.t||'').trim()||'제목 없음');return t.length>8?t.slice(0,8)+'…':t};
+  box.innerHTML='<svg viewBox="0 0 720 480" role="group" aria-label="항목 관계도">'+E.map(([a,b,r])=>{const A=ix.get(a),B=ix.get(b);return `<line class="gel" x1="${A.px|0}" y1="${A.py|0}" x2="${B.px|0}" y2="${B.py|0}"/>`+(r?`<text class="gtx" x="${((A.px+B.px)/2)|0}" y="${((A.py+B.py)/2)|0}">${esc(r)}</text>`:'')}).join('')
+   +P.map(q=>(q=>{const im=imgOk(q.x.i),r=im?18:(q.d?7+Math.min(q.d,5)*1.5:5),cx=q.px|0,cy=q.py|0;return `<g class="gnd" tabindex="0" role="button" data-id="${q.x.id}" aria-label="${esc(nm(q.x))} 열기"><circle cx="${cx}" cy="${cy}" r="${r}"/>${im?`<clipPath id="cp${q.x.id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath><image href="${q.x.i}" x="${cx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" clip-path="url(#cp${q.x.id})" preserveAspectRatio="xMidYMid slice"/>`:''}<text x="${cx}" y="${cy+r+16}">${esc(nm(q.x))}</text></g>`})(q)).join('')+'</svg>';
 }
 function sizeBody(){const b=$('#lobd');b.style.height='auto';b.style.height=b.scrollHeight+'px'}
 function openLore(x){
   le=x;$('#lol').hidden=true;$('#lod').hidden=false;
   $('#lob span').textContent=L().name;$('#lodc').innerHTML=chips(L().cats,x.c);
-  $('#loti').value=x.t;$('#lobd').value=x.b;$('#lost').textContent='저장됨';lkPick(false);paintLinks();
+  $('#loti').value=x.t;$('#lodt').value=x.d||'';paintLim();$('#lobd').value=x.b;$('#lost').textContent='저장됨';lkPick(false);paintLinks();
   const d=$('#lodel');clearTimeout(arm);delete d.dataset.arm;d.textContent='삭제';
   sizeBody();scrollTo(0,0);
 }
@@ -189,13 +209,77 @@ function closeLore(){
 }
 function saveLore(){if(le)db.lore(lk,le);counts()}
 $('#lod').addEventListener('input',e=>{
-  if(e.target.id==='loti')le.t=e.target.value;else if(e.target.id==='lobd'){le.b=e.target.value;sizeBody()}else return;
+  if(e.target.id==='loti')le.t=e.target.value;else if(e.target.id==='lodt')le.d=e.target.value.trim().slice(0,30);else if(e.target.id==='lobd'){le.b=e.target.value;sizeBody()}else return;
   $('#lost').textContent='저장 중…';clearTimeout(lt);lt=setTimeout(saveLore,600);
 });
 $('#lodc').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;le.c=b.dataset.c;$('#lodc').innerHTML=chips(L().cats,le.c);saveLore()};
 $('#loc').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;lf=b.dataset.c;paintLore()};
 $('#log').onclick=e=>{const b=e.target.closest('.card');if(b)openLore(L().items.find(x=>x.id==b.dataset.id))};
 $('#loa').onclick=()=>{const l=L(),x={id:Date.now(),w:wk.id,t:'',c:lf==='전체'?l.cats[0]:lf,b:'',l:[],p:Math.min(0,...l.items.map(i=>i.p||0))-1};l.items.unshift(x);openLore(x);$('#loti').focus()};
+/* 항목 이미지: 고른 사진을 정사각형으로 잘라 작게 줄인 JPEG(data URL)로 저장해요 */
+function paintLim(){const on=le&&imgOk(le.i);$('#limb').innerHTML=on?`<img src="${le.i}" alt="">`:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';$('#limx').hidden=!on;$('#limb').setAttribute('aria-label',on?'이미지 바꾸기':'이미지 올리기')}
+function shrink(url,cb){
+  const im=new Image();
+  im.onerror=()=>cb(null);
+  im.onload=()=>{
+    const s=Math.min(im.width,im.height),sx=(im.width-s)/2,sy=(im.height-s)/2;
+    for(const [px,q] of [[256,.82],[256,.6],[192,.6],[160,.5]]){
+      const c=document.createElement('canvas');c.width=c.height=px;const g=c.getContext('2d');
+      g.fillStyle='#fff';g.fillRect(0,0,px,px);g.drawImage(im,sx,sy,s,s,0,0,px,px);
+      const u=c.toDataURL('image/jpeg',q);if(u.length<=55000)return cb(u)}
+    cb(null)};
+  im.src=url;
+}
+$('#limb').onclick=()=>$('#limf').click();
+$('#limf').onchange=e=>{
+  const f=e.target.files[0];e.target.value='';if(!f||!le)return;
+  if(!/^image\//.test(f.type))return toast('이미지 파일만 올릴 수 있어요.');
+  const x=le,r=new FileReader();
+  r.onerror=()=>toast('이미지를 읽지 못했어요.');
+  r.onload=()=>shrink(r.result,u=>{if(!u)return toast('이 이미지는 줄이지 못했어요. 다른 이미지로 해 보세요.');x.i=u;if(le===x){paintLim();saveLore()}else db.lore(lk,x)});
+  r.readAsDataURL(f);
+};
+$('#limx').onclick=()=>{if(!le)return;le.i='';paintLim();saveLore()};
+$('#lmo').onclick=e=>{const b=e.target.closest('button');if(b){lm=b.dataset.m;paintLore()}};
+const gOpen=g=>{if(!g)return;const x=L().items.find(y=>y.id==g.dataset.id);if(x)openLore(x)};
+$('#lgv').onclick=e=>gOpen(e.target.closest('.gnd,.tli'));
+$('#lgv').onkeydown=e=>{const g=e.target.closest('.gnd');if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();gOpen(g)}};
+/* 타임라인: 날짜는 자유롭게 적고, 그 안의 숫자(연·월·일 순)로 줄을 세워요. 숫자가 없으면 "날짜 없는 항목"에 모아요 */
+const dnum=s=>(String(s).match(/-?\d+/g)||[]).map(Number);
+const dcmp=(a,b)=>{for(let i=0;i<Math.max(a.length,b.length);i++){const d=(a[i]??-1e9)-(b[i]??-1e9);if(d)return d}return 0};
+const lnm=x=>(x.t||'').trim()||'제목 없음';
+function paintTime(){
+  const its=L().items.filter(x=>lf==='전체'||x.c===lf),dt=its.filter(x=>dnum(x.d||'').length).sort((a,b)=>dcmp(dnum(a.d),dnum(b.d))||(a.p||0)-(b.p||0)),un=its.filter(x=>!dnum(x.d||'').length);
+  const row=x=>`<li><input class="tld" data-id="${x.id}" value="${esc(x.d||'')}" maxlength="30" placeholder="날짜" aria-label="${esc(lnm(x))} 날짜"><button type="button" class="tli" data-id="${x.id}"><b>${esc(lnm(x))}</b><small>${esc(x.c)}</small></button></li>`;
+  $('#lgv').innerHTML=its.length?`<ol class="tlv">${dt.map(row).join('')||'<li class="none">날짜를 적으면 이곳에 연표로 이어져요.</li>'}</ol>`+(un.length?`<h3 class="tlh">날짜 없는 항목</h3><ol class="tlv un">${un.map(row).join('')}</ol>`:''):'<p class="none">아직 항목이 없어요.</p>';
+}
+$('#lgv').addEventListener('change',e=>{const t=e.target.closest('.tld');if(!t)return;const x=L().items.find(y=>y.id==t.dataset.id);if(!x)return;x.d=t.value.trim().slice(0,30);db.lore(lk,x);paintLore()});
+/* 지도: 칸에 항목을 끌어다 놓아요. 놓은 곳은 가로·세로 % 로 저장해요. 놓은 핀을 아래 목록으로 끌면 지도에서 빠져요 */
+function paintMap(){
+  const its=L().items.filter(x=>lf==='전체'||x.c===lf),on=its.filter(x=>x.mx!=null),off=its.filter(x=>x.mx==null);
+  const pin=(x,o)=>`<button type="button" class="pin${o?'':' on'}" data-id="${x.id}"${o?'':` style="left:${x.mx}%;top:${x.my}%"`}><i></i><span>${esc(lnm(x).slice(0,10))}</span></button>`;
+  $('#lgv').innerHTML=`<div class="mpb" id="mpb" aria-label="지도">${on.map(x=>pin(x,0)).join('')}${on.length?'':'<p class="none">아래 항목을 끌어서 지도에 놓아 보세요.</p>'}</div><div class="mpt" id="mpt"><small>${off.length?'아직 놓지 않은 항목':'모든 항목을 놓았어요'}</small>${off.map(x=>pin(x,1)).join('')}</div>`;
+}
+let dg=null;
+$('#lgv').addEventListener('pointerdown',e=>{
+  const p=lm==='map'&&!e.button&&e.target.closest('.pin');if(!p)return;
+  e.preventDefault();p.setPointerCapture(e.pointerId);dg={p,x0:e.clientX,y0:e.clientY,mv:false};
+});
+$('#lgv').addEventListener('pointermove',e=>{
+  if(!dg)return;const dx=e.clientX-dg.x0,dy=e.clientY-dg.y0;
+  if(!dg.mv&&Math.hypot(dx,dy)<5)return;dg.mv=true;dg.p.style.transform=dg.p.classList.contains('on')?`translate(calc(-5px + ${dx}px),calc(-50% + ${dy}px))`:`translate(${dx}px,${dy}px)`;dg.p.classList.add('drag');
+});
+const inBox=(e,el)=>{const r=el.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom};
+$('#lgv').addEventListener('pointerup',e=>{
+  if(!dg)return;const{p,mv}=dg;dg=null;
+  const x=L().items.find(y=>y.id==p.dataset.id);if(!x)return;
+  if(!mv){openLore(x);return}
+  const b=$('#mpb').getBoundingClientRect(),f=v=>Math.round(Math.min(97,Math.max(3,v))*10)/10;
+  if(inBox(e,$('#mpb'))){x.mx=f((e.clientX-b.left)/b.width*100);x.my=f((e.clientY-b.top)/b.height*100);db.lore(lk,x)}
+  else if(inBox(e,$('#mpt'))&&x.mx!=null){x.mx=x.my=null;db.lore(lk,x)}
+  paintMap();
+});
+$('#lgv').addEventListener('pointercancel',()=>{if(dg){dg=null;paintMap()}});
 $('#lob').onclick=closeLore;
 $('#lodel').onclick=e=>{
   const b=e.currentTarget;

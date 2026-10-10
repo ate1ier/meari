@@ -28,6 +28,7 @@ const ST=['draft','revise','done'];
 const okMeta=(r:any)=>ST.includes(r.status)&&isInt(r.goal)&&r.goal>=0&&r.goal<=100000; /* 화 상태·개별 목표 */
 /* 설정 항목 연결: [{k:'world'|'codex'|'ch', id, r:관계 이름(12자)}] 최대 30개 */
 const okLinks=(a:any)=>Array.isArray(a)&&a.length<=30&&a.every(o=>o&&typeof o==='object'&&['world','codex','ch'].includes(o.k)&&isInt(o.id)&&isStr(o.r,12));
+const okPt=(v:any)=>v===undefined||v===null||(typeof v==='number'&&v>=0&&v<=100);
 const isTime=v=>typeof v==='string'&&!Number.isNaN(Date.parse(v));
 const bad=()=>{throw new Http(400,'invalid')};
 const rowsOf=(o,max=500)=>{if(!Array.isArray(o.rows)||o.rows.length>max)bad();return o.rows};
@@ -87,7 +88,11 @@ async function exec(sb,uid,o){
       if(!(['world','codex'].includes(r.kind)&&isInt(r.id)&&r.id>0&&isStr(r.cat,20)&&isStr(r.title,100)&&isStr(r.body,100000)&&isInt(r.pos)&&isInt(r.work_id)&&r.work_id>0))bad();
       const links=r.links===undefined?[]:r.links;
       if(!okLinks(links))bad();
-      E(await sb.from('lore_items').upsert({user_id:uid,kind:r.kind,id:r.id,work_id:r.work_id,cat:r.cat,title:r.title,body:r.body,pos:r.pos,links,updated_at:now()},{onConflict:'user_id,kind,id'}));
+      const evd=r.ev_date===undefined?'':r.ev_date,mx=r.map_x??null,my=r.map_y??null;
+      const img=r.img===undefined?'':r.img;
+      if(!isStr(img,60000)||(img!==''&&!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(img)))bad();
+      if(!isStr(evd,30)||!okPt(mx)||!okPt(my)||(mx===null)!==(my===null))bad();
+      E(await sb.from('lore_items').upsert({user_id:uid,kind:r.kind,id:r.id,work_id:r.work_id,cat:r.cat,title:r.title,body:r.body,pos:r.pos,links,ev_date:evd,img,map_x:mx,map_y:my,updated_at:now()},{onConflict:'user_id,kind,id'}));
     }break;
     case'lo-del':if(!(['world','codex'].includes(o.kind)&&isInt(o.id)))bad();E(await sb.from('lore_items').delete().eq('user_id',uid).eq('kind',o.kind).eq('id',o.id));break;
     case'me':{
@@ -160,7 +165,7 @@ export function makeHandler(sb,cfg={}){
         const[us,ch,lo,wk,me,lg,st]=await Promise.all([
           sb.from('meari_users').select('id,username').eq('id',uid).maybeSingle(),
           pages(()=>sb.from('chapters').select('id,work_id,n,title,body,pos,status,goal,updated_at').eq('user_id',uid).order('work_id').order('pos').order('id')),
-          pages(()=>sb.from('lore_items').select('kind,id,work_id,cat,title,body,pos,links').eq('user_id',uid).order('work_id').order('pos').order('id')),
+          pages(()=>sb.from('lore_items').select('kind,id,work_id,cat,title,body,pos,links,ev_date,img,map_x,map_y').eq('user_id',uid).order('work_id').order('pos').order('id')),
           sb.from('works').select('id,title,pos,updated_at').eq('user_id',uid).order('pos').limit(100),
           sb.from('memos').select('id,t,at').eq('user_id',uid).order('at',{ascending:false}).limit(30),
           pages(()=>sb.from('writing_log').select('day,chars').eq('user_id',uid).order('day',{ascending:false})), /* 연간 통계용 · 1000행씩 끝까지 */

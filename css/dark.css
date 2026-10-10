@@ -17,7 +17,7 @@
 /* 사이드바: 페이지보다 한 톤 밝게 + 경계선 */
 :root[data-theme=dark] aside{background:#1a1a1e;border-right:1px solid var(--line)}
 :root[data-theme=dark] aside .logo{background:var(--m)}
-:root[data-theme=dark] .chh>small,:root[data-theme=dark] .sub small{opacity:.65}
+:root[data-theme=dark] .chh>small,:root[data-theme=dark] .sub small{opacity:.8}
 :root[data-theme=dark] aside .ni:hover:not([aria-current]),:root[data-theme=dark] aside .ch:hover:not([aria-current]),:root[data-theme=dark] aside .add:hover,:root[data-theme=dark] aside .si:hover:not([aria-current]){background:rgba(255,255,255,.1)}
 :root[data-theme=dark] .open aside{box-shadow:0 0 48px rgba(0,0,0,.6)}
 

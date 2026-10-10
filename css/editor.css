@@ -1,8 +1,9 @@
 .top{position:sticky;top:0;z-index:5;background:var(--paper);transition:opacity .4s}
 .tb{display:flex;align-items:center;gap:.15rem;padding:.55rem clamp(1rem,3vw,2rem);font-size:.82rem;color:var(--mute)}
+.tb .sep{width:1px;height:18px;margin:0 .35rem;background:var(--line)}
 .tb .st{margin-right:auto;display:flex;align-items:center;gap:.5rem}
 .tb .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.6}
-.tb button{min-height:36px;padding:0 .65rem;border-radius:10px;transition:background .25s,color .25s}
+.tb button{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:36px;min-width:36px;padding:0 .65rem;border-radius:10px;transition:background .25s,color .25s}
 .tb button:hover{background:var(--soft);color:var(--fg)}
 .tb button[aria-pressed=true]{background:var(--act,var(--m));color:var(--actfg,#fff)}
 .stat{display:flex;gap:.8rem;margin:0 .5rem;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -26,5 +27,6 @@
 #ed::selection,#ed *::selection{background:var(--m);color:var(--bg)}
 ::highlight(f){background:rgba(176,16,111,.22)}
 ::highlight(fc){background:var(--acc);color:#fff}
-.empty #ed>*:first-child::before{content:"여기에 이야기를 시작하세요";color:var(--mute);position:absolute;pointer-events:none}
+.empty #ed>*:first-child{position:relative}
+.empty #ed>*:first-child::before{content:"여기에 이야기를 시작하세요";color:var(--mute);position:absolute;left:0;top:0;pointer-events:none;text-indent:0}
 .focus #ed>*:not(.on){opacity:.28}

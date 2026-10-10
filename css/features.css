@@ -59,7 +59,7 @@ aside .logo{box-shadow:0 1px 0 rgba(247,246,243,.1)}
 .cact .ask{width:auto;padding:0 .6rem;font-size:.76rem;font-weight:600;background:var(--acc);color:#fff;opacity:1;white-space:nowrap}
 .chw.dq .ch{padding-right:7.4rem}
 .rnb{display:grid;grid-template-columns:2.6rem minmax(0,1fr);align-items:center;min-height:42px;padding:0 .5rem 0 .75rem;border-radius:12px;background:rgba(247,246,243,.12);outline:1px solid rgba(247,246,243,.4);font-size:.92rem}
-.rnb b{font-weight:400;opacity:.65}
+.rnb b{font-weight:400;opacity:.78}
 .rn{width:100%;min-height:36px;background:none;border:0;outline:0;font-size:.92rem;color:inherit}
 .rn::placeholder{color:inherit;opacity:.5}
 /* 선택 글자 수 */
@@ -133,7 +133,7 @@ aside .logo{box-shadow:0 1px 0 rgba(247,246,243,.1)}
 .spl .none{padding:1rem .3rem;font-size:.86rem}
 .spp .spk{margin:.5rem .3rem 0;font-size:.72rem;color:var(--mute)}
 .spp .spi{align-self:flex-start;margin-top:.3rem}
-.si.add2{opacity:.5;font-size:.82rem}
+.si.add2{opacity:.72;font-size:.82rem}
 
 /* 화 상태 · 화별 목표 */
 .cmeta{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;margin:-1.2rem 0 1.4rem}.cmeta+.men{margin-top:0}.focus .cmeta{display:none}
@@ -142,7 +142,7 @@ aside .logo{box-shadow:0 1px 0 rgba(247,246,243,.1)}
 .seg button:hover{color:var(--fg)}
 .seg button[aria-pressed=true]{background:var(--act,var(--m));color:var(--actfg,#fff)}
 .cmeta select{min-height:34px;padding:0 .6rem;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--fg);font:inherit;font-size:.82rem}
-.chsum{padding:0 .75rem;font-size:.74rem;opacity:.55;font-variant-numeric:tabular-nums}
+.chsum{padding:0 .75rem;font-size:.74rem;opacity:.75;font-variant-numeric:tabular-nums}
 .ch .stl{font-style:normal}
 .chw[data-s=revise] .ch .stl{color:#f0b429}
 .chw[data-s=done] .ch .stl{color:#4cc38a}
@@ -161,3 +161,15 @@ aside .logo{box-shadow:0 1px 0 rgba(247,246,243,.1)}
 .hab:empty{display:none}
 /* 도구줄이 좁으면 줄을 바꿔요(지표가 늘어도 글자가 꺾이지 않게) */
 .tb{flex-wrap:wrap;row-gap:.1rem}.tb .st,.tb button,.stat>*{white-space:nowrap}.stat{flex-wrap:wrap;row-gap:0}
+
+/* 단축키 도움말 */
+.hbox{width:min(34rem,100%);max-height:76vh;overflow:auto;padding:1.2rem 1.4rem 1.3rem}
+.hh{display:flex;align-items:center;justify-content:space-between}
+.hh h2{font-size:1.15rem;letter-spacing:-.03em}
+.hh button{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;color:var(--mute)}
+.hh button:hover{background:var(--soft);color:var(--fg)}
+.hbox h3{margin:1.2rem 0 .3rem;font-size:.74rem;font-weight:600;color:var(--mute)}
+.hr{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.hr>span:last-child{display:flex;gap:.3rem;flex:none}
+.hbox kbd{font:600 .74rem Archivo,sans-serif;padding:.25rem .55rem;border-radius:7px;background:var(--soft);box-shadow:0 0 0 1px var(--line)}
+.hn{font-size:.8rem;color:var(--mute)}

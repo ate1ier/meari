@@ -91,7 +91,7 @@ const db=(()=>{
 
   const rowWk=W=>({id:W.id,title:W.t,pos:W.pos});
   const rowCh=(c,i)=>({id:c.id,n:c.n,title:c.t,body:c.c,pos:i,work_id:c.w,status:c.s||'draft',goal:c.g||0});
-  const rowLo=(k,x)=>({kind:k,id:x.id,cat:x.c,title:x.t,body:x.b,pos:x.p||0,work_id:x.w});
+  const rowLo=(k,x)=>({kind:k,id:x.id,cat:x.c,title:x.t,body:x.b,pos:x.p||0,work_id:x.w,links:x.l||[]});
 
   /* 처음 가입한 계정에 넣어 줄 기본 내용: 빈 1화 하나가 든 '새 원고' */
   async function seed(){
@@ -126,7 +126,7 @@ const db=(()=>{
       }
       const by=new Map(ws.map(W=>[W.id,W]));
       j.chapters.forEach(r=>{const W=by.get(r.work_id);if(!W)return;W.chs.push({id:r.id,n:r.n,t:r.title,c:r.body,s:r.status||'draft',g:r.goal||0,w:W.id,_sig:r.title+'\0'+r.body});W.at=Math.max(W.at,new Date(r.updated_at).getTime()||0)});
-      j.lore.forEach(r=>{const W=by.get(r.work_id);if(W)W[r.kind].push({id:r.id,c:r.cat,t:r.title,b:r.body,p:r.pos,w:W.id})});
+      j.lore.forEach(r=>{const W=by.get(r.work_id);if(W)W[r.kind].push({id:r.id,c:r.cat,t:r.title,b:r.body,p:r.pos,w:W.id,l:Array.isArray(r.links)?r.links:[]})});
       if(!ws.length){const W={id:Date.now(),t:'새 원고',pos:0,at:0,chs:[],world:[],codex:[]};ws.push(W);await api('write',{ops:[{t:'wk',rows:[rowWk(W)]}]})}
       for(const W of ws){
         W.world.sort((a,b)=>a.p-b.p);W.codex.sort((a,b)=>a.p-b.p);

@@ -66,6 +66,7 @@ create table if not exists public.lore_items (
   title   text   not null default '' check (char_length(title) <= 100),
   body    text   not null default '' check (char_length(body) <= 100000),
   pos     int    not null default 0,
+  links   jsonb  not null default '[]'::jsonb check (jsonb_typeof(links) = 'array' and pg_column_size(links) <= 8000),  -- 연결: [{k,id,r}]
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   primary key (user_id, kind, id)

@@ -47,6 +47,7 @@
 <div class="app" id="app" data-v="home" inert>
 <aside id="side" aria-label="메뉴">
   <div class="logo">메아리</div>
+  <button class="ni qk" type="button" id="kb2" aria-label="빠른 이동 열기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4"/></svg>빠른 이동<kbd></kbd></button>
   <nav>
     <button class="ni" type="button" id="nh" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 10v10h12V10"/></svg>홈</button>
     <button class="ni" type="button" id="ne"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5"/></svg>내 원고</button>
@@ -62,16 +63,17 @@
       <div id="subx"></div>
     </div></div>
   </nav>
-  <div class="chsec"><div class="chh"><small id="chn">새 원고</small><button class="chm" id="chm" type="button" aria-pressed="false" title="화 삭제·순서·제목 정리">정리</button></div><small class="chsum" id="chsum"></small><nav class="chs" id="chs" aria-label="화"></nav>
+  <div class="chsec"><div class="chh"><small id="chn">화 목록</small><button class="chm" id="chm" type="button" aria-pressed="false" title="화 삭제·순서·제목 정리">정리</button></div><small class="chsum" id="chsum"></small><nav class="chs" id="chs" aria-label="화"></nav>
     <button class="add" id="add" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>새 화 추가</button></div>
   <div class="sp"></div>
   <div class="sbm"><small>빠른 메모</small>
     <form id="sbf"><label class="sr" for="sbi">메모</label><input id="sbi" maxlength="80" placeholder="떠오른 생각을 적고 Enter" autocomplete="off"></form>
     <ul class="notes sbl" id="sbl"></ul>
   </div>
-  <div class="me"><b id="me"></b><button type="button" id="out">나가기</button></div>
+  <div class="me"><b id="me"></b><span class="mb"><button type="button" id="hlp" aria-haspopup="dialog" title="단축키 도움말 (?)">단축키</button><button type="button" id="out">나가기</button></span></div>
 </aside>
 <div class="scrim" id="scrim"></div>
+<div class="pal" id="hp" hidden><div class="pbox hbox" role="dialog" aria-modal="true" aria-labelledby="hpt"><div class="hh"><h2 id="hpt">단축키</h2><button type="button" id="hpx" aria-label="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="hpl"></div></div></div>
 
 <div class="col">
 <div class="mbar"><button type="button" id="menu" aria-label="메뉴 열기" aria-controls="side"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>메아리</div>
@@ -108,7 +110,9 @@
     <section class="wk"><h3><span id="wkwh">세계관</span><button class="more" type="button" data-go="world">모두 보기</button></h3><div id="wkw"></div></section>
     <section class="wk"><h3><span id="wkch">설정집</span><button class="more" type="button" data-go="codex">모두 보기</button></h3><div id="wkc"></div></section>
   </div>
-  <section class="wk"><h3><span>최근 2주 집필량</span><span class="streak" id="stk"></span></h3><ul class="act" id="act"></ul></section>
+  <section class="wk" id="rec"><h3><span>집필 기록</span><span class="streak" id="stk"></span></h3>
+    <div class="rhd"><div class="seg" id="rtab" role="group" aria-label="기록 보기"><button type="button" data-rv="w" aria-pressed="true">2주</button><button type="button" data-rv="m" aria-pressed="false">월</button><button type="button" data-rv="y" aria-pressed="false">연</button></div></div>
+    <div class="rsum" id="rsum"></div><div id="rbody"></div></section>
 </main>
 
 <main id="wall" hidden>
@@ -120,14 +124,26 @@
 <main id="lore" hidden>
   <div id="lol">
     <div class="hi"><p id="lop">내 원고 · 새 원고</p><h1 id="lot"></h1></div>
-    <div class="lbar"><div class="chips" id="loc" role="group" aria-label="분류"></div><button class="addl" id="loa" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>새 항목</button></div>
+    <div class="lbar"><div class="chips" id="loc" role="group" aria-label="분류"></div><div class="lbtn"><button class="mng" id="lcb" type="button" aria-expanded="false" aria-controls="lcm">분류 편집</button><button class="addl" id="loa" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>새 항목</button></div></div>
+    <div class="lcm" id="lcm" hidden></div>
     <div class="cards" id="log"></div>
   </div>
   <div class="lpage" id="lod" hidden>
     <button class="back" id="lob" type="button"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span></span></button>
     <div class="chips" id="lodc" role="group" aria-label="분류"></div>
-    <label class="sr" for="loti">이름</label><input class="ti" id="loti" maxlength="40" placeholder="이름을 붙여 주세요" autocomplete="off">
+    <label class="sr" for="loti">이름</label><input class="ti" id="loti" maxlength="100" placeholder="이름을 붙여 주세요" autocomplete="off">
     <label class="sr" for="lobd">내용</label><textarea id="lobd" placeholder="설정을 자유롭게 적어 두세요" spellcheck="false"></textarea>
+    <section class="llk" id="llk" aria-label="연결">
+      <div class="llh"><h2>연결</h2><button id="lla" type="button" aria-expanded="false" aria-controls="llp">+ 연결 추가</button></div>
+      <div class="llp" id="llp" hidden>
+        <input class="cin" id="llq" placeholder="이름 또는 화 번호로 찾기 (예: 철수, 3화)" autocomplete="off" aria-label="연결할 항목 찾기">
+        <div class="llr"><input class="cin" id="llr" maxlength="12" placeholder="관계 (선택)" autocomplete="off" aria-label="관계 이름"><div class="chips" id="llc2" role="group" aria-label="관계 예시"></div></div>
+        <ul class="llc" id="llc"></ul>
+      </div>
+      <ul class="lll" id="lll"></ul>
+      <h3 class="llb" id="llbh">이 항목을 가리키는 곳</h3>
+      <ul class="lll" id="llb"></ul>
+    </section>
     <div class="ldf"><span id="lost" role="status">저장됨</span><button id="lodel" type="button">삭제</button></div>
   </div>
 </main>
@@ -137,12 +153,13 @@
     <div class="tb">
       <span class="st" id="st" role="status">저장됨</span>
       <span class="stat"><span class="sel" id="sel" hidden></span><span class="td" id="td"></span><button id="cm" type="button" title="공백 포함/제외 전환"><span id="cnt">0자</span></button><span class="rt" id="rt" hidden></span><span class="rd" id="rd" hidden></span><span class="mae" id="mae"></span></span>
-      <button id="spb" type="button" aria-expanded="false" aria-controls="spp" title="맞춤법 오류 목록 · F8 다음 오류, Shift+F8 이전 오류">맞춤법</button>
-      <button id="mo" type="button" aria-expanded="false" aria-controls="mp" title="빠른 메모">메모</button>
-      <button id="fdb" type="button" aria-expanded="false" title="Ctrl/⌘+F">찾기</button>
-      <button id="fm" type="button" aria-label="글자 작게">가−</button>
-      <button id="fp" type="button" aria-label="글자 크게">가+</button>
-      <button id="fo" type="button" aria-expanded="false" aria-controls="fpn" aria-label="글꼴, 줄간격, 글쓰기 도우미" title="글꼴·줄간격·도우미">Aa</button>
+      <button id="spb" type="button" aria-expanded="false" aria-controls="spp" title="맞춤법 오류 목록 · F8 다음 오류, Shift+F8 이전 오류"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15l3-8 3 8M5.2 12.5h3.6M13 19c1.2-1.2 2.3-1.2 3.5 0s2.3 1.2 3.5 0"/></svg><span id="spt">맞춤법</span></button>
+      <button id="mo" type="button" aria-expanded="false" aria-controls="mp" title="빠른 메모"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v10l-6 6H5zM13 20v-6h6"/></svg><span>메모</span></button>
+      <button id="fdb" type="button" aria-expanded="false" title="찾기·바꾸기 (Ctrl/⌘+F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4"/></svg><span>찾기</span></button>
+      <span class="sep" aria-hidden="true"></span>
+      <button id="fm" type="button" aria-label="글자 작게" title="글자 작게"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19l5-13 5 13M5 14h6M16 12h6"/></svg></button>
+      <button id="fp" type="button" aria-label="글자 크게" title="글자 크게"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19l5-13 5 13M5 14h6M19 9v6M16 12h6"/></svg></button>
+      <button id="fo" type="button" aria-expanded="false" aria-controls="fpn" aria-label="글꼴, 줄간격, 글쓰기 도우미" title="글꼴 · 줄간격 · 문단 · 글쓰기 도우미"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"/></svg></button>
       <div class="fpn" id="fpn" role="group" aria-label="글꼴, 줄간격, 글쓰기 도우미" hidden>
         <p>글꼴</p><div class="opt" id="ffo"></div>
         <p>줄간격</p><div class="opt" id="flo"></div>
@@ -183,8 +200,9 @@
   </div>
   <div class="page" id="page">
     <div class="num" id="num" aria-hidden="true">24</div>
-    <label class="sr" for="ti">화 제목</label><input class="ti" id="ti" maxlength="40" placeholder="제목 없음" autocomplete="off">
+    <label class="sr" for="ti">화 제목</label><input class="ti" id="ti" maxlength="100" placeholder="제목 없음" autocomplete="off">
     <div class="cmeta" id="cmeta"><div class="seg" id="cst" role="group" aria-label="이 화의 상태"></div><label class="sr" for="cgs">이 화의 목표 글자 수</label><select id="cgs" title="이 화만의 목표 글자 수"></select></div>
+    <div class="clk" id="clk" hidden></div>
     <div class="men" id="men" aria-label="이 화에 나온 설정"></div>
     <div id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-label="본문" aria-autocomplete="list" aria-controls="atm" spellcheck="false"></div>
   </div>
@@ -202,6 +220,7 @@
 <script src="js/spell.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/works.js"></script>
+<script src="js/stats.js"></script>
 <script src="js/gate.js"></script>
 <script src="js/palette.js"></script>
 <script src="js/main.js"></script>

@@ -2,6 +2,8 @@ const $=s=>document.querySelector(s);
 const esc=s=>s.replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 const fmt=n=>n.toLocaleString('ko-KR'),raw=t=>t.replace(/\n/g,'').length;
 const SIZES=[1.02,1.15,1.3,1.5];
+/* 제목 글자 수 한도 — 서버(meari-api)·DB 제약과 같은 값이에요: 원고 60, 화·설정 이름 100 */
+const TL={work:60,ch:100,lore:100};
 /* 목표는 두 가지예요. 하루 목표(GOALS, 홈·집필량)와 화당 목표(CGOALS, 에디터 진행 막대·원고 카드)를 따로 저장해요 */
 const CGOALS=[2000,3000,4000,5000,6000];let ci=1;
 const GOAL=()=>CGOALS[ci];

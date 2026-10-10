@@ -2,7 +2,7 @@
 .hi p{font-size:1rem;font-weight:500;color:var(--mute)}
 .hi h1{margin-top:.3rem;font-size:clamp(2.4rem,5vw,3.8rem);font-weight:600;letter-spacing:-.035em;line-height:1.1;word-break:keep-all}
 .cur{display:block;width:100%;margin-top:clamp(1.8rem,4vw,3rem);padding:clamp(1.5rem,3.5vw,2.6rem);border-radius:22px;background:var(--m);color:var(--bg);outline:1px solid rgba(247,246,243,.08)}
-.cur small{font-size:.85rem;opacity:.6}
+.cur small{font-size:.85rem;opacity:.75}
 .cur h2{margin:.5rem 0 1rem;font-size:clamp(2.4rem,6vw,5rem);line-height:1.08;font-weight:800;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:.75px var(--st,#8a8a8c);transition:-webkit-text-fill-color .7s,-webkit-text-stroke-color .7s}
 .cur h2 span{white-space:nowrap}
 .cur h2 i{font-style:normal;display:inline-block;animation:pop .7s cubic-bezier(.2,.8,.2,1) backwards,sc 1.6s ease-out backwards;animation-delay:calc(var(--i)*80ms + .15s)}

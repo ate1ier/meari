@@ -7,19 +7,19 @@ const chBtn=(a,l,d)=>`<button type="button" data-a="${a}" aria-label="${l}" titl
 function list(f){
   if(!f&&($('#chs .rn')||$('#chs').contains(document.activeElement)))return;
   const html=chs.map((c,i)=>{
-    if(chRn===c.id)return `<div class="chw"><div class="rnb"><b>${c.n}화</b><input class="rn" maxlength="40" value="${esc(c.t)}" placeholder="제목 없음" aria-label="${c.n}화 제목"></div></div>`;
+    if(chRn===c.id)return `<div class="chw"><div class="rnb"><b>${c.n}화</b><input class="rn" maxlength="${TL.ch}" value="${esc(c.t)}" placeholder="제목 없음" aria-label="${c.n}화 제목"></div></div>`;
     const ask=chDq===c.id;
     return `<div class="chw${c===cur?' on':''}${ask?' dq':''}" data-id="${c.id}" data-s="${c.s||'draft'}"><button class="ch" type="button" data-id="${c.id}" aria-current="${c===cur}"><b>${c.n}화</b><span>${esc(c.t)||'제목 없음'}</span><small>${fmt(lenN(c))}${c.g?' / '+fmt(c.g):''}자 · <em class="stl">${stName(c.s)}</em></small></button><div class="cact">${chBtn('ren','제목 고치기')}${chBtn('up','위로',i===0)}${chBtn('dn','아래로',i===chs.length-1)}${ask?'<button type="button" class="ask" data-a="del">정말 삭제</button>':chBtn('del','삭제')}</div></div>`;
   }).join('');
   $('#chsum').textContent=STS.map(([k,n])=>n+' '+chs.filter(c=>(c.s||'draft')===k).length).join(' · ');
   if(html!==listHtml){listHtml=html;EL.chs.innerHTML=html} /* 바뀐 게 없으면 다시 그리지 않아요 */
 }
-function stats(){queueMicrotask(men);scanSoon();
+function stats(){scanSoon();
   const t=text(),r=raw(t),n=strict?len(t):r;cur.c=t;cur._rk=t;cur._rv=r;
   EL.cnt.textContent=fmt(n)+'자';EL.mae.textContent='원고지 '+Math.ceil(r/200)+'매';EL.td.textContent=gained();
   const g=cGoal(cur),p=Math.min(100,n/g*100);EL.gl.style.width=p+'%';EL.glr.setAttribute('aria-label','한 화 목표 '+fmt(g)+'자 중 '+Math.round(p)+'%');
   EL.edit.classList.toggle('done',n>=g);EL.page.classList.toggle('empty',!t.trim());
-  [...ed.children].forEach(el=>el.classList.toggle('sb',/^\s*(\*\s*){3}$/.test(el.textContent)));
+  [...ed.children].forEach(el=>{const t=el.textContent;el.classList.toggle('sb',t.length<24&&/^\s*(\*\s*){3}$/.test(t))});
 }
 function save(){
   if(!cur)return;cur.c=text();cur.t=ti.value.trim();
@@ -121,6 +121,7 @@ $('#chs').onclick=e=>{
   }
   const b=e.target.closest('.ch');if(!b)return;const c=chs.find(c=>c.id==b.dataset.id);
   if(e.detail===2){chRename(c);return}/* 더블클릭: 첫 클릭이 목록을 다시 그리므로 dblclick 대신 click 횟수로 판단 */
+  if(app.dataset.v!=='edit')view('edit');   /* 설정·홈 화면에서 화를 누르면 에디터로 들어가요 */
   open(c);setMenu(false);
 };
 $('#chs').addEventListener('keydown',e=>{
@@ -131,7 +132,7 @@ $('#chs').addEventListener('keydown',e=>{
 });
 $('#chs').addEventListener('focusout',e=>{if(e.target.classList.contains('rn'))chEndRn(true)});
 $('#chm').onclick=()=>{const on=$('#chm').getAttribute('aria-pressed')!=='true';$('#chm').setAttribute('aria-pressed',on);$('#chs').classList.toggle('mg',on)};
-$('#add').onclick=()=>{save();const c={id:Date.now(),n:chs.length+1,t:'',c:'',s:'draft',g:0,w:wk.id,_sig:'\0'};chs.push(c);persist();open(c);setMenu(false);ti.focus()};
+$('#add').onclick=()=>{if(app.dataset.v!=='edit')view('edit');save();const c={id:Date.now(),n:chs.length+1,t:'',c:'',s:'draft',g:0,w:wk.id,_sig:'\0'};chs.push(c);persist();open(c);setMenu(false);ti.focus()};
 $('#cm').onclick=()=>{strict=!strict;stats();list(true);selc();toast(strict?'공백 제외로 셉니다.':'공백 포함으로 셉니다.')};
 function setSize(i,keep=true){size=Math.max(0,Math.min(SIZES.length-1,i));document.documentElement.style.setProperty('--fs',SIZES[size]+'rem');if(keep)db.pref('size',size)}
 $('#fm').onclick=()=>setSize(size-1);$('#fp').onclick=()=>setSize(size+1);setSize(size,false);
@@ -144,7 +145,22 @@ function paintCmeta(){
   const vs=[...new Set([...CG_STEPS,...(cur.g?[cur.g]:[])])].sort((a,b)=>a-b);
   $('#cgs').innerHTML=`<option value="0">목표 ${fmt(GOAL())}자 (원고 기본)</option>`+vs.map(v=>`<option value="${v}">목표 ${fmt(v)}자</option>`).join('');
   $('#cgs').value=String(cur.g||0);
+  paintChLinks();
 }
+/* 이 화와 연결된 세계관·설정집 항목(설정 쪽에서 이 화로 건 연결)을 제목 아래에 보여요 */
+function paintChLinks(){
+  const box=$('#clk');if(!box||!cur||!wk)return;
+  const hit=[];
+  ['codex','world'].forEach(k=>(wk[k]||[]).forEach(x=>(x.l||[]).forEach(o=>{if(o.k==='ch'&&o.id===cur.id)hit.push([k,x,o.r])})));
+  box.hidden=!hit.length;
+  box.innerHTML=hit.length?'<span>연결된 설정</span>'+hit.slice(0,12).map(([k,x,r])=>`<button type="button" data-k="${k}" data-id="${x.id}" title="${k==='codex'?'설정집':'세계관'}에서 열기">${esc((x.t&&x.t.trim())||'제목 없음')}${r?' · '+esc(r):''}</button>`).join('')+(hit.length>12?`<span>외 ${hit.length-12}개</span>`:''):'';
+}
+$('#clk').onclick=e=>{
+  const b=e.target.closest('button[data-id]');if(!b)return;
+  const k=b.dataset.k,x=(wk[k]||[]).find(o=>o.id===+b.dataset.id);if(!x)return;
+  if(cur){clearTimeout(timer);save()}
+  view(k);openLore(x);
+};
 function cmetaSave(){touch();db.chapters(wk);list(true);paintCmeta();stats();repaintCards()}
 $('#cst').onclick=e=>{const b=e.target.closest('button');if(!b||!cur||(cur.s||'draft')===b.dataset.s)return;cur.s=b.dataset.s;cmetaSave();toast(cur.n+'화를 ‘'+stName(cur.s)+'’ 상태로 바꿨어요.')};
 $('#cgs').onchange=()=>{if(!cur)return;cur.g=+$('#cgs').value;cmetaSave();toast(cur.g?cur.n+'화 목표를 '+fmt(cur.g)+'자로 정했어요.':cur.n+'화는 원고 기본 목표('+fmt(GOAL())+'자)를 따라요.')};
@@ -260,38 +276,51 @@ document.addEventListener('click',e=>{const p=e.composedPath();if(!$('#fpn').hid
 paintFmt();
 
 /* 설정 이름 표시 · 표기 점검 · 반복 표현 점검 */
-let lgHits=[],hits=[],sph=[],spN=0,SPI=new Set(),scT,repN=0,patKey='',pats=[];
-const scanSoon=()=>{clearTimeout(scT);scT=setTimeout(scan,220)};
+let lgHits=[],hits=[],sph=[],spN=0,SPI=new Set(),scT,repN=0,patKey='',pats=[],blkC=new WeakMap(),blkSig='';
+const scanSoon=()=>{clearTimeout(scT);scT=setTimeout(()=>{men();scan()},220)};
 const hlSet=(k,rs)=>{if(!(window.CSS&&CSS.highlights))return;rs.length?CSS.highlights.set(k,new Highlight(...rs)):CSS.highlights.delete(k)};
 const rg=(nd,s,e)=>{const r=new Range();r.setStart(nd,s);r.setEnd(nd,e);return r};
 const canon=t=>t.trim().replace(/\s+/g,' ');
 const STOP=new Set(['그녀','그가','그는','그것','이것','저것','하지','하고','있는','있던','없는','없던','같은','같이','그리고','하지만','그러나','그때','다시','이미','아직','모든','어떤','무슨','자신','사람','순간','느낌']);
 const JOSA=/(으로서|으로써|에서는|에게서|에서|에게|으로|까지|부터|처럼|보다|이라|라고|하게|하고|이|가|은|는|을|를|의|에|도|만|와|과|로|고|며|던|인|한)$/;
-function scan(){
-  const lore=OPT.hl?[['world',LORE.world],['codex',LORE.codex]].flatMap(([k,l])=>l.items.map(x=>({k,x,n:l.name,c:canon(x.t)}))).filter(o=>o.c.replace(/ /g,'').length>=2).sort((a,b)=>b.c.length-a.c.length):[];
-  const key=lore.map(o=>o.k+o.x.id+':'+o.c).join('|');   /* 설정 제목이 그대로면 정규식을 다시 만들지 않아요 */
-  if(key!==patKey){patKey=key;pats=lore.map(o=>({o,re:new RegExp([...o.c.replace(/ /g,'')].map(c=>c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('\\s*'),'g')}))}
-  const toks=[],taken=new Map(),lg=[],hb=[];hits=[];sph=[];habC=HAB.map(()=>0);
-  const w=document.createTreeWalker(ed,NodeFilter.SHOW_TEXT);let nd;
-  while(nd=w.nextNode()){
-    const tk=[];taken.set(nd,tk);
+const textNodes=b=>{if(b.nodeType===3)return[b];if(b.nodeType!==1)return[];const w=document.createTreeWalker(b,NodeFilter.SHOW_TEXT),a=[];let n;while(n=w.nextNode())a.push(n);return a};
+function scanBlock(nds){
+  const hits=[],sph=[],lg=[],hb=[],toks=[],hc=HAB.map(()=>0);
+  for(const nd of nds){
+    const tk=[];
     for(const {o,re} of pats){re.lastIndex=0;let m;
       while(m=re.exec(nd.data)){const s=m.index,e=s+m[0].length;if(tk.some(([a,b])=>s<b&&e>a))continue;tk.push([s,e]);hits.push({nd,s,e,o,v:m[0]!==o.c,r:rg(nd,s,e)})}}
     if(OPT.sp)for(const m of spellFind(nd.data)){if(SPI.has(m.t)||tk.some(([a,b])=>m.s<b&&m.e>a))continue;sph.push({nd,s:m.s,e:m.e,sp:1,m,r:rg(nd,m.s,m.e)})}
     if(OPT.long){const re=/[^.!?…\n]+[.!?…]*["”’']*/g;let m;
       while(m=re.exec(nd.data)){const t=m[0].trim();if(t.length>LONGS[LONGI]){const s=m.index+m[0].indexOf(t);lg.push({r:rg(nd,s,s+t.length),n:t.length})}}}
-    if(OPT.hab&&HAB.length)HAB.forEach((w,i)=>{let p=0;while((p=nd.data.indexOf(w,p))>-1){hb.push(rg(nd,p,p+w.length));habC[i]++;p+=w.length}});
+    if(OPT.hab&&HAB.length)HAB.forEach((w,i)=>{let p=0;while((p=nd.data.indexOf(w,p))>-1){hb.push(rg(nd,p,p+w.length));hc[i]++;p+=w.length}});
     if(OPT.rep){const re=/[가-힣A-Za-z0-9]+/g;let m;
-      while(m=re.exec(nd.data)){const s=m.index,e=s+m[0].length;if(tk.some(([a,b])=>s<b&&e>a))continue;toks.push({nd,s,e,t:m[0]})}}
+      while(m=re.exec(nd.data)){const s=m.index,e=s+m[0].length;if(tk.some(([a,b])=>s<b&&e>a))continue;toks.push({nd,s,e,t:m[0],st:m[0].replace(JOSA,'')})}}
+  }
+  return{nds,ds:nds.map(n=>n.data),hits,sph,lg,hb,toks,hc};
+}
+function scan(){
+  const lore=OPT.hl?[['world',LORE.world],['codex',LORE.codex]].flatMap(([k,l])=>l.items.map(x=>({k,x,n:l.name,c:canon(x.t)}))).filter(o=>o.c.replace(/ /g,'').length>=2).sort((a,b)=>b.c.length-a.c.length):[];
+  const key=lore.map(o=>o.k+o.x.id+':'+o.c).join('|');   /* 설정 제목이 그대로면 정규식을 다시 만들지 않아요 */
+  if(key!==patKey){patKey=key;pats=lore.map(o=>({o,re:new RegExp([...o.c.replace(/ /g,'')].map(c=>c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('\\s*'),'g')}))}
+  /* 문단(편집기의 직계 자식) 단위 캐시: 글자가 바뀐 문단만 다시 훑어요. 설정·옵션이 바뀌면 전부 새로 계산해요. */
+  const csig=[patKey,OPT.hl,OPT.sp,OPT.long,OPT.hab,OPT.rep,LONGI,HAB.join('\u0001'),[...SPI].join('\u0001')].join('|');
+  if(csig!==blkSig){blkSig=csig;blkC=new WeakMap()}
+  const toks=[],lg=[],hb=[];hits=[];sph=[];habC=HAB.map(()=>0);
+  for(const b of ed.childNodes){
+    const nl=textNodes(b);let c=blkC.get(b);
+    if(!(c&&c.nds.length===nl.length&&nl.every((n,i)=>n===c.nds[i]&&n.data===c.ds[i])))blkC.set(b,c=scanBlock(nl));
+    for(const x of c.hits)hits.push(x);for(const x of c.sph)sph.push(x);for(const x of c.lg)lg.push(x);for(const x of c.hb)hb.push(x);for(const x of c.toks)toks.push(x);
+    c.hc.forEach((n,i)=>habC[i]+=n);
   }
   hlSet('lore',hits.filter(h=>!h.v).map(h=>h.r));hlSet('lov',hits.filter(h=>h.v).map(h=>h.r));spN=sph.length;hlSet('sp',sph.map(h=>h.r));
   const marks=[];
   if(OPT.rep){
     const by=new Map();
-    toks.forEach((k,i)=>{const st=k.t.replace(JOSA,'');if(st.length<2||STOP.has(st)||/^\d+$/.test(st))return;(by.get(st)||by.set(st,[]).get(st)).push(i)});
+    toks.forEach((k,i)=>{const st=k.st;if(st.length<2||STOP.has(st)||/^\d+$/.test(st))return;(by.get(st)||by.set(st,[]).get(st)).push(i)});
     const mk=new Set();
     by.forEach(p=>{for(let k=0;k+2<p.length;k++)if(p[k+2]-p[k]<=30)[p[k],p[k+1],p[k+2]].forEach(i=>mk.add(i))});
-    mk.forEach(i=>{const k=toks[i],st=k.t.replace(JOSA,'');marks.push(rg(k.nd,k.s,k.s+st.length))});
+    mk.forEach(i=>{const k=toks[i],st=k.st;marks.push(rg(k.nd,k.s,k.s+st.length))});
     const fin=toks.filter(k=>k.t.length>=2&&k.t.endsWith('다')&&/^(?:[.?!…”’"']|$)/.test(k.nd.data.slice(k.e)));
     for(let i=0;i<fin.length;){let j=i;const key=fin[i].t.slice(-2);while(j<fin.length&&fin[j].t.slice(-2)===key)j++;
       if(j-i>=3)for(let k=i;k<j;k++)marks.push(rg(fin[k].nd,fin[k].e-2,fin[k].e));i=j}
@@ -361,7 +390,7 @@ function paintOpt(){
   TOG.forEach(([k,n,d])=>{const b=$(`#tgl [data-k="${k}"]`);b.setAttribute('aria-checked',!!OPT[k]);$('#tg-'+k).textContent=k==='rep'&&OPT.rep?(repN?repN+'곳 표시 중':'반복되는 표현이 없어요'):k==='sp'&&OPT.sp?(spN?spN+'곳 확인해 보세요':'틀린 표현이 없어요'):k==='long'&&OPT.long?(longN?longN+'개 문장이 '+LONGS[LONGI]+'자를 넘어요':'긴 문장이 없어요'):k==='hab'&&OPT.hab&&HAB.length?(habC.reduce((a,b)=>a+b,0)+'곳 표시 중'):d});
   paintHab();
 }
-function paintSp(){$('#spb').textContent=OPT.sp&&spN?'맞춤법 '+spN:'맞춤법'}
+function paintSp(){$('#spt').textContent=OPT.sp&&spN?'맞춤법 '+spN:'맞춤법'}
 $('#tgl').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=b.dataset.k;OPT[k]=OPT[k]?0:1;db.pref('opt',{...OPT});if(k==='hl'||k==='sp')ltHide();if(k==='tw'&&OPT.tw)twScroll();scan()};
 function paintLong(){$('#lno').innerHTML=LONGS.map((n,i)=>`<button type="button" data-i="${i}" aria-pressed="${i===LONGI}">${n}자</button>`).join('')}
 $('#lno').onclick=e=>{const b=e.target.closest('button');if(!b)return;LONGI=+b.dataset.i;db.pref('lg',LONGI);paintLong();scan()};

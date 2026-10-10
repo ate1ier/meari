@@ -1,0 +1,50 @@
+/* 로그인 후 다크 모드 — html[data-theme=dark]는 로그인 시 켜지고 나가기 시 꺼짐 */
+:root[data-theme=dark]{
+  --paper:#121214;      /* 페이지 바탕 */
+  --bg:#f2f1ee;         /* 카드·사이드바 위 글자 / 반전 알약 */
+  --fg:#f2f1ee;
+  --m:#2e2e36;          /* 히어로 카드·로고·호버 면 */
+  --line:rgba(255,255,255,.16);
+  --mute:rgba(255,255,255,.62);
+  --soft:rgba(255,255,255,.075);
+  --acc:#f06ab0;
+  --st:#a4a4ac;         /* 외곽선 큰 글자 */
+  --act:#f2f1ee;        /* 선택된 칩·버튼 */
+  --actfg:#121214;
+}
+:root[data-theme=dark] .app,:root[data-theme=dark] .pal{color-scheme:dark}
+
+/* 사이드바: 페이지보다 한 톤 밝게 + 경계선 */
+:root[data-theme=dark] aside{background:#1a1a1e;border-right:1px solid var(--line)}
+:root[data-theme=dark] aside .logo{background:var(--m)}
+:root[data-theme=dark] .chh>small,:root[data-theme=dark] .sub small{opacity:.65}
+:root[data-theme=dark] aside .ni:hover:not([aria-current]),:root[data-theme=dark] aside .ch:hover:not([aria-current]),:root[data-theme=dark] aside .add:hover,:root[data-theme=dark] aside .si:hover:not([aria-current]){background:rgba(255,255,255,.1)}
+:root[data-theme=dark] .open aside{box-shadow:0 0 48px rgba(0,0,0,.6)}
+
+/* 히어로 카드: 바탕과 구분되도록 테두리 */
+:root[data-theme=dark] .cur{outline:1px solid rgba(255,255,255,.1)}
+:root[data-theme=dark] .bk{box-shadow:0 0 0 1px rgba(255,255,255,.1)}
+:root[data-theme=dark] .bk.off{box-shadow:none}
+:root[data-theme=dark] .cur small,:root[data-theme=dark] .bk small{opacity:.72}
+
+/* 입력창 */
+:root[data-theme=dark] .field:focus{border-color:rgba(255,255,255,.42);background:#1a1a1e}
+:root[data-theme=dark] #gate .field:focus{background:#fff}
+
+/* 에디터: 선택 영역·찾기 하이라이트 */
+:root[data-theme=dark] #ed::selection,:root[data-theme=dark] #ed *::selection{background:rgba(240,106,176,.45);color:#fff}
+:root[data-theme=dark]::highlight(f){background:rgba(240,106,176,.34)}
+:root[data-theme=dark]::highlight(fc){background:#f06ab0;color:#121214}
+
+/* 빠른 이동 · 토스트 */
+:root[data-theme=dark] .pal{background:rgba(0,0,0,.6)}
+:root[data-theme=dark] .pbox{background:#1a1a1e;box-shadow:0 0 0 1px rgba(255,255,255,.16),0 24px 64px rgba(0,0,0,.6)}
+:root[data-theme=dark] .toast{background:#3a3a44;outline:1px solid rgba(255,255,255,.18);box-shadow:0 8px 24px rgba(0,0,0,.45)}
+
+/* 스크롤바 */
+:root[data-theme=dark],:root[data-theme=dark] *{scrollbar-color:rgba(255,255,255,.3) transparent}
+@supports not (scrollbar-color:auto){:root[data-theme=dark] ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3)}}
+
+/* 글꼴 패널 · 자동완성 */
+:root[data-theme=dark] .fpn,:root[data-theme=dark] .atm{background:#1a1a1e;box-shadow:0 0 0 1px rgba(255,255,255,.16),0 18px 48px rgba(0,0,0,.6)}
+:root[data-theme=dark] .atmo[aria-selected=true]{background:#3a3a44}

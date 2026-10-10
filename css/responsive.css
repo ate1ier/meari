@@ -1,0 +1,24 @@
+@media(max-width:900px){
+  .app,.app.focus{grid-template-columns:minmax(0,1fr)}
+  aside{position:fixed;left:0;top:0;bottom:0;width:min(24rem,86vw);height:auto;transform:translateX(-100%);visibility:hidden;transition:transform .4s cubic-bezier(.2,.7,.2,1),visibility 0s .4s}
+  .open aside{transform:none;visibility:visible;transition-delay:0s;box-shadow:0 0 48px rgba(0,0,0,.14)}
+  .scrim{position:fixed;inset:0;z-index:15;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .3s;display:block}
+  .open .scrim{opacity:1;pointer-events:auto}
+  .mbar{display:flex;align-items:center;gap:.8rem;padding:.6rem clamp(.75rem,3vw,1.25rem) 0;font-weight:600}
+  .mbar button{display:grid;place-items:center;width:40px;height:40px;border-radius:12px}
+  .mbar button:hover{background:var(--soft)}
+  .cols{grid-template-columns:minmax(0,1fr)}
+  .cur footer{flex-direction:column;align-items:flex-start}
+  #wkl,#wal{grid-template-columns:minmax(0,1fr)}
+  #wal .bk:first-child{grid-column:auto}
+  .bk{min-height:13rem}
+  .bk.off,.bk.nw{min-height:9rem}
+  .act{padding:1.1rem .8rem .8rem;gap:.1rem}
+  .act .trk{width:5px}
+  .act small{font-size:.64rem}
+  .mae,.td{display:none}
+  .tb{padding-inline:.6rem;white-space:nowrap}
+  .tb .st{min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .tb button{padding:0 .45rem}
+  .stat{margin:0 .3rem;gap:.5rem}
+}

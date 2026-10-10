@@ -1,0 +1,93 @@
+#gate a{color:inherit;text-decoration-color:var(--m);text-underline-offset:3px}
+#gate a:hover{text-decoration-thickness:2px}
+#gate .lg{min-height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);position:relative;overflow:hidden;background:#fff}
+#gate .left{align-self:stretch;min-width:0;padding:clamp(1.5rem,4vw,3.5rem);display:grid;grid-template-rows:1fr auto 1fr;gap:.5rem;background:var(--m)}
+#gate .big,#gate .pwe{font:800 clamp(5rem,22vw,20rem)/.82 Archivo,sans-serif;text-transform:uppercase;letter-spacing:-.02em;white-space:nowrap;min-width:0;overflow:hidden;color:transparent;-webkit-text-stroke:1.5px #8a8a8c;transition:-webkit-text-fill-color .9s,font-size .25s cubic-bezier(.2,.7,.2,1)}
+#gate .big{grid-row:2}
+#gate .pwe{grid-row:3;align-self:start;min-height:.82em;text-align:center}
+#gate .ph{opacity:.25;-webkit-text-stroke-color:var(--bg)}
+#gate .big i,#gate .pwe i{font-style:normal;display:inline-block;animation:pop .5s cubic-bezier(.2,.8,.2,1),scg 1.4s ease-out}
+#gate .ok .big,#gate .ok .pwe{-webkit-text-fill-color:var(--bg)}
+#gate form{justify-self:center;align-self:stretch;width:min(17.5rem,calc(100% - 3rem));padding:clamp(1.5rem,4vw,3.5rem) 0;display:grid;grid-template-rows:1fr auto 1fr;gap:.75rem;text-align:center;position:relative;z-index:2;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo",Pretendard,system-ui,sans-serif;transition:opacity .35s}
+#gate .ok form{opacity:0;pointer-events:none}
+#gate form.err{animation:nope .35s}
+@keyframes nope{30%{transform:translateX(-4px)}65%{transform:translateX(3px)}}
+#gate .clock{align-self:end;margin-bottom:1.15rem;pointer-events:none;transition:opacity .4s}
+#gate .two .clock{opacity:0}
+#gate .clock p:first-child{font-size:1rem;font-weight:500;opacity:.65}
+#gate .clock p:last-child{white-space:nowrap;font-size:clamp(2.6rem,4.2vw,3.6rem);font-weight:600;letter-spacing:-.035em;line-height:1.05;font-variant-numeric:tabular-nums}
+#gate .stage{display:grid}
+#gate .step{grid-area:1/1;display:grid;align-content:start;visibility:visible;transition:opacity .45s,transform .6s cubic-bezier(.2,.7,.2,1),visibility 0s}
+#gate .s2{position:relative;opacity:0;transform:translateY(20px);visibility:hidden;transition-delay:0s,0s,.6s}
+#gate .two .s1{opacity:0;transform:translateY(-20px);visibility:hidden;transition-delay:0s,0s,.6s}
+#gate .two .s2{opacity:1;transform:none;visibility:visible;transition-delay:.12s,.12s,0s}
+#gate .w{position:relative}
+#gate input:not([type=checkbox]){width:100%;min-height:40px;padding:.5rem 1.2rem;background:rgba(17,17,17,.055);border:1px solid transparent;border-radius:12px;font-size:.88rem;text-align:center;outline:0;transition:background .3s,border-color .3s,box-shadow .3s}
+#gate .w input{padding:.5rem 4.2rem}
+#gate .w.e input{padding:.5rem 3rem}
+#gate input::placeholder{color:#11111188}
+#gate input:not([type=checkbox]):focus{background:#fff;border-color:var(--m);box-shadow:0 0 0 4px rgba(30,30,32,.14)}
+#gate input[aria-invalid=true]{border-color:var(--err)}
+#gate .eye,#gate .go{position:absolute;top:50%;width:28px;height:28px;margin-top:-14px;border-radius:9px;display:grid;place-items:center}
+#gate .eye svg{width:15px;height:15px}
+#gate .go svg{width:14px;height:14px}
+#gate .eye{right:38px;opacity:.5;transition:opacity .25s,background .25s}
+#gate .eye:hover,#gate .eye[aria-pressed=true]{opacity:1;background:rgba(30,30,32,.08)}
+#gate .go{right:6px;background:var(--m);color:#fff;transition:transform .25s,background .3s}
+#gate .go:hover{background:#000;transform:scale(1.07)}
+#gate .go:disabled{cursor:wait;transform:none}
+#gate .load .go svg{display:none}
+#gate .load .go::after{content:"";width:14px;height:14px;border:2px solid #ffffff55;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#gate .chg{position:absolute;bottom:100%;left:0;right:0;margin:0 auto .3rem;width:max-content;max-width:100%;padding:.3rem 1rem;border-radius:10px;font-size:1.3rem;font-weight:600;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:background .25s}
+#gate .chg:hover{background:rgba(30,30,32,.08)}
+#gate .under{align-self:start}
+#gate .msg{min-height:1.4em;font-size:.82rem;color:var(--err)}
+#gate .sub{display:flex;justify-content:center;font-size:.8rem;opacity:.6}
+#gate .sub input{accent-color:var(--m);margin-right:.4rem}
+#gate .dock{display:flex;justify-content:center;gap:2rem;margin-top:1.4rem}
+#gate .ic{display:grid;justify-items:center;gap:.45rem;font-size:.72rem;text-decoration:none;opacity:.8}
+#gate .ic span{width:40px;height:40px;border-radius:13px;background:rgba(17,17,17,.07);display:grid;place-items:center;transition:background .3s,transform .3s}
+#gate .ic svg{width:18px;height:18px}
+#gate .ic:hover span,#gate .ic:focus-visible span{color:#fff;background:var(--m);transform:scale(1.06)}
+@media(max-width:760px){#gate .lg{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}
+#gate .left{padding-bottom:0;grid-template-rows:none}
+#gate .big,#gate .pwe{grid-row:auto}}
+@media(max-height:600px){#gate .clock{display:none}}
+#gate{position:fixed;inset:0;z-index:100;overflow:auto;overscroll-behavior:contain;background:#fff;color:#111;--fg:#111;--m:#1e1e20;--bg:#f7f6f3;--err:#b0106f;clip-path:inset(0);transition:clip-path .95s cubic-bezier(.76,0,.24,1),opacity .4s}
+#gate.away{clip-path:inset(0 calc(100% - var(--sw)) 0 0)}
+#gate.fade{opacity:0;pointer-events:none}
+@media(max-width:900px){#gate.away{clip-path:inset(0 0 100% 0)}}
+#gate .left{position:relative;overflow:hidden}
+#gate .big,#gate .pwe{transition:-webkit-text-fill-color .9s,font-size .25s cubic-bezier(.2,.7,.2,1),opacity .4s}
+#gate.away .big,#gate.away .pwe{opacity:0}
+#gate .ghost{position:absolute;overflow:visible;pointer-events:none;transform-origin:50% 50%;animation:echo 1.6s cubic-bezier(.15,.6,.25,1) both;transition:none}
+#gate .ghost i{animation:none}
+#gate .ok .ghost{-webkit-text-fill-color:transparent}
+@keyframes echo{from{transform:scale(1);opacity:.55}to{transform:scale(2.1);opacity:0}}
+#gate .ph i{display:inline;animation:none}
+#gate .ghost .ph{opacity:.7}
+#gate .ghost .ph i{animation:none!important;display:inline}
+@keyframes veil{from{clip-path:inset(0)}to{clip-path:inset(0 100% 0 0)}}
+@keyframes veilv{from{clip-path:inset(0)}to{clip-path:inset(0 0 100% 0)}}
+#gate .intro::before{content:"";position:absolute;inset:0;z-index:3;background:var(--m);animation:veil 1s cubic-bezier(.7,0,.2,1) 1.5s both}
+#gate .intro .left{z-index:4}
+@media(max-width:760px){#gate .intro::before{animation-name:veilv}}
+#gate .intro .ph i,#gate .swap .ph i{display:inline-block;animation:pop .7s cubic-bezier(.2,.8,.2,1) backwards,scg 1.6s ease-out backwards;animation-delay:calc(var(--i)*70ms + .15s)}
+#gate .intro form{animation:soft .8s 2s backwards}
+#gate .clock{display:grid}
+#gate .ck,#gate .cj{grid-area:1/1;transition:opacity .4s}
+#gate .cj,#gate .w2,#gate #tologin{display:none}
+#gate .cj{opacity:0;display:block}
+#gate .join .cj{opacity:1}
+#gate .join .ck{opacity:0}
+#gate .join .w2{display:block;margin-top:.55rem}
+#gate .join #go1,#gate .join .dock a:not(#tologin){display:none}
+#gate .join #tologin{display:grid}
+#gate .join .s2 .w:first-of-type input,#gate .w.w2 input{padding:.5rem 3rem}
+#gate .join .s2 .eye{right:6px}
+#gate .swap form{animation:soft .6s backwards}
+@keyframes scg{from{-webkit-text-stroke-width:3.5px}}
+
+/* 로그인 상태로 돌아온 방문: 서버에서 내 원고를 읽어 오는 동안 로그인 화면이 잠깐 비치지 않게 */
+html.resume #gate{visibility:hidden}

@@ -641,15 +641,18 @@ const db = (() => {
       enqueue('lo:' + k + ':' + x.id, () => {
         const W = wkOf(x.w);
         if (!(W && W[k].includes(x))) return null;
-        /* 새로 올린 이미지 원본(x._fp)은 항목 저장 바로 뒤에 따로 보내요. 성공했을 때만 비워서, 실패하면 다시 시도할 때 함께 가요 */
-        const fp = x.i && x._fp;
+        /* 새로 올린 이미지 원본(x._fp)·원본 지우기(x._fc)는 항목 저장 바로 뒤에 따로 보내요. 성공했을 때만 비워서, 실패하면 다시 시도할 때 함께 가요 */
+        const fp = x.i ? x._fp : null,
+          fc = !x.i && x._fc;
         const p = w([
           { t: 'lo', rows: [rowLo(k, x)] },
           ...(fp ? [{ t: 'lo-img', kind: k, id: x.id, full: fp }] : []),
+          ...(fc ? [{ t: 'lo-img', kind: k, id: x.id, full: '' }] : []),
         ]);
-        return fp
+        return fp || fc
           ? p.then(r => {
-              if (x._fp === fp) x._fp = null;
+              if (fp && x._fp === fp) x._fp = null;
+              if (fc && !x.i) x._fc = false;
               return r;
             })
           : p;

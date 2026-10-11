@@ -285,7 +285,6 @@ function plan(sb, uid, o) {
           links,
           ev_date: evd,
           img,
-          ...(img === '' ? { img_full: '' } : {}) /* 이미지를 지우면 원본도 함께 지워요 */,
           map_x: mx,
           map_y: my,
           updated_at: now(),
@@ -305,26 +304,26 @@ function plan(sb, uid, o) {
         );
       };
     case 'lo-img': {
-      /* 항목 이미지 원본(큰 JPEG): 목록에는 싣지 않고 따로 저장해요. 항목(lo)을 먼저 저장한 뒤에 와요 */
+      /* 항목 이미지 원본(큰 JPEG)을 따로 저장해요(full 이 빈 문자열이면 원본 지우기). 항목(lo)을 먼저 저장한 뒤에 와요.
+         일반 항목 저장(lo)은 이 열을 건드리지 않아서, 새 SQL 을 아직 못 돌린 DB 에서도 글·항목 저장은 그대로 돼요 */
       if (
         !(
           ['world', 'codex'].includes(o.kind) &&
           isInt(o.id) &&
           isStr(o.full, 1400000) &&
-          /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(o.full)
+          (o.full === '' || /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(o.full))
         )
       )
         bad();
       return async () => {
-        E(
-          await sb
-            .from('lore_items')
-            .update({ img_full: o.full })
-            .eq('user_id', uid)
-            .eq('kind', o.kind)
-            .eq('id', o.id)
-            .neq('img', '') /* 그새 이미지를 지웠다면 원본도 남기지 않아요 */
-        );
+        let q = sb
+          .from('lore_items')
+          .update({ img_full: o.full })
+          .eq('user_id', uid)
+          .eq('kind', o.kind)
+          .eq('id', o.id);
+        if (o.full !== '') q = q.neq('img', ''); /* 그새 이미지를 지웠다면 원본도 남기지 않아요 */
+        E(await q);
       };
     }
     case 'me': {

@@ -915,6 +915,7 @@ $('#limf').onchange = e => {
       x.i = u;
       x._f = x._fp = full; /* _fp: 서버에 아직 못 보낸 원본 */
       x._ft = true;
+      x._fc = false;
       if (le === x) {
         paintLim();
         saveLore();
@@ -927,6 +928,7 @@ $('#limx').onclick = () => {
   le.i = '';
   le._f = le._fp = null;
   le._ft = false;
+  le._fc = true; /* 서버의 원본도 지우기(저장 때 함께 보내요) */
   paintLim();
   saveLore();
 };

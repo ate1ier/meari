@@ -1507,12 +1507,12 @@
   width: calc(100% + 2.4rem);
   margin: 0 -1.2rem 0.35rem;
   aspect-ratio: 16/10;
-  object-fit: cover;
+  object-fit: contain; /* 잘라내지 않고 이미지 전체가 보이게 */
+  background: var(--soft);
   border-radius: 0;
 }
 .card.pr .cav {
   aspect-ratio: 1/1;
-  object-position: 50% 30%;
 }
 .card.pr .cav.ph {
   aspect-ratio: 3/2;
@@ -1579,7 +1579,23 @@
 .limb img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+}
+/* 이미지가 있을 때: 동그라미로 자르지 않고 비율 그대로(누르면 원본) */
+.limb.has {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 140px;
+  border-radius: 12px;
+  cursor: zoom-in;
+}
+.limb.has img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 140px;
+  max-height: 180px;
 }
 .limb svg {
   width: 24px;
@@ -1591,6 +1607,7 @@
 .limb small {
   font-size: 0.78rem;
 }
+.lim #limc,
 .lim #limx {
   min-height: 28px;
   padding: 0 0.6rem;
@@ -1599,12 +1616,22 @@
   color: var(--mute);
   background: var(--soft);
 }
+.lim #limc:hover,
 .lim #limx:hover {
   color: var(--fg);
 }
-.lhd.pr .limb {
+.lhd.pr .limb:not(.has) {
   width: clamp(112px, 26vw, 176px);
   height: clamp(112px, 26vw, 176px);
+}
+.lhd.pr .limb.has {
+  max-width: clamp(112px, 26vw, 176px);
+}
+.lhd.pr .limb.has img {
+  max-width: clamp(112px, 26vw, 176px);
+  max-height: clamp(150px, 34vw, 240px);
+}
+.lhd.pr .limb {
   border-radius: 22px;
   box-shadow: 0 0 0 3px var(--cf);
 }
@@ -1842,4 +1869,61 @@ li.none.emp {
 }
 .gsv svg {
   max-height: none;
+}
+
+/* 이미지 원본 보기 */
+.imv {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 3.4rem 1rem 2.4rem;
+  background: rgba(10, 10, 10, 0.86);
+  cursor: zoom-out;
+}
+.imv[hidden] {
+  display: none;
+}
+.imv img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  cursor: default;
+}
+.imx {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+}
+.imx:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+.imx svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.imvs {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.8rem;
+  text-align: center;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.75);
 }

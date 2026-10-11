@@ -791,8 +791,8 @@ $('#loa').onclick = () => {
   openLore(x);
   $('#loti').focus();
 };
-/* 항목 이미지: 고른 사진을 정사각형으로 잘라 작게 줄인 JPEG(data URL)로 저장해요 */
-/* 항목 상세 위쪽: 인물은 이미지를 크게 두고 이름·날짜와 나란히(프로필), 그 밖의 분류는 작은 동그라미 이미지 */
+/* 항목 이미지: 고른 사진을 자르지 않고 비율 그대로 줄여요. 작은 JPEG(썸네일, 목록·상세용)와 큰 JPEG(원본, 눌렀을 때만 읽어요) 두 장을 저장해요 */
+/* 항목 상세 위쪽: 인물은 이미지를 크게 두고 이름·날짜와 나란히(프로필), 그 밖의 분류는 작은 이미지 */
 function paintLim() {
   if (!le) return;
   const on = imgOk(le.i),
@@ -804,36 +804,103 @@ function paintLim() {
     ? `<img src="${le.i}" alt="">`
     : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>' +
       (pr ? '<small>사진 올리기</small>' : '');
-  $('#limx').hidden = !on;
-  $('#limb').setAttribute('aria-label', on ? '이미지 바꾸기' : '이미지 올리기');
+  $('#limx').hidden = $('#limc').hidden = !on;
+  $('#limb').classList.toggle('has', on);
+  $('#limb').setAttribute('aria-label', on ? '이미지 크게 보기' : '이미지 올리기');
+}
+/* 긴 변이 m 픽셀이 되게(더 작은 사진은 키우지 않고) 비율 그대로 줄여 JPEG 로, 글자 수가 cap 이하가 될 때까지 단계적으로 */
+function enc(im, steps, cap) {
+  for (const [m, q] of steps) {
+    const k = Math.min(1, m / Math.max(im.width, im.height)),
+      c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(im.width * k));
+    c.height = Math.max(1, Math.round(im.height * k));
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, c.width, c.height);
+    g.drawImage(im, 0, 0, c.width, c.height);
+    const u = c.toDataURL('image/jpeg', q);
+    if (u.length <= cap) return u;
+  }
+  return null;
 }
 function shrink(url, cb) {
   const im = new Image();
   im.onerror = () => cb(null);
   im.onload = () => {
-    const s = Math.min(im.width, im.height),
-      sx = (im.width - s) / 2,
-      sy = (im.height - s) / 2;
-    for (const [px, q] of [
-      [256, 0.82],
-      [256, 0.6],
-      [192, 0.6],
-      [160, 0.5],
-    ]) {
-      const c = document.createElement('canvas');
-      c.width = c.height = px;
-      const g = c.getContext('2d');
-      g.fillStyle = '#fff';
-      g.fillRect(0, 0, px, px);
-      g.drawImage(im, sx, sy, s, s, 0, 0, px, px);
-      const u = c.toDataURL('image/jpeg', q);
-      if (u.length <= 55000) return cb(u);
-    }
-    cb(null);
+    const t = enc(
+      im,
+      [
+        [320, 0.82],
+        [320, 0.6],
+        [256, 0.6],
+        [192, 0.5],
+      ],
+      55000
+    );
+    if (!t) return cb(null);
+    const f = enc(
+      im,
+      [
+        [1600, 0.86],
+        [1600, 0.72],
+        [1280, 0.72],
+        [1024, 0.7],
+        [800, 0.7],
+      ],
+      1300000
+    );
+    cb(t, f || t);
   };
   im.src = url;
 }
-$('#limb').onclick = () => $('#limf').click();
+/* 이미지 크게 보기: 누르면 원본(큰 JPEG)을 보여 줘요. 원본은 눌렀을 때 서버에서 받아 항목에 담아 둬요 */
+let vx = null;
+function closeView() {
+  vx = null;
+  $('#imv').hidden = true;
+  $('#limb').focus();
+}
+function openView() {
+  const x = le;
+  if (!x || !imgOk(x.i)) return;
+  vx = x;
+  const iv = $('#imvi'),
+    st = $('#imvs');
+  iv.src = x._f || x.i;
+  st.textContent = '';
+  $('#imv').hidden = false;
+  $('#imx').focus();
+  if (x._f || x._ft) return;
+  st.textContent = '원본 불러오는 중…';
+  db.loreImg(lk, x.id).then(
+    f => {
+      x._ft = true; /* 한 번 물어봤어요(옛 이미지는 원본이 없어요) */
+      if (imgOk(f)) x._f = f;
+      if (vx !== x) return;
+      if (x._f) iv.src = x._f;
+      st.textContent = '';
+    },
+    () => {
+      if (vx === x) st.textContent = '원본을 불러오지 못해 작은 이미지를 보여 드려요.';
+    }
+  );
+}
+$('#imv').onclick = e => {
+  if (e.target.id !== 'imvi') closeView();
+};
+document.addEventListener(
+  'keydown',
+  e => {
+    if (e.key !== 'Escape' || $('#imv').hidden) return;
+    e.preventDefault();
+    e.stopPropagation();
+    closeView();
+  },
+  true
+);
+$('#limb').onclick = () => (le && imgOk(le.i) ? openView() : $('#limf').click());
+$('#limc').onclick = () => $('#limf').click();
 $('#limf').onchange = e => {
   const f = e.target.files[0];
   e.target.value = '';
@@ -843,9 +910,11 @@ $('#limf').onchange = e => {
     r = new FileReader();
   r.onerror = () => toast('이미지를 읽지 못했어요.');
   r.onload = () =>
-    shrink(r.result, u => {
+    shrink(r.result, (u, full) => {
       if (!u) return toast('이 이미지는 줄이지 못했어요. 다른 이미지로 해 보세요.');
       x.i = u;
+      x._f = x._fp = full; /* _fp: 서버에 아직 못 보낸 원본 */
+      x._ft = true;
       if (le === x) {
         paintLim();
         saveLore();
@@ -856,6 +925,8 @@ $('#limf').onchange = e => {
 $('#limx').onclick = () => {
   if (!le) return;
   le.i = '';
+  le._f = le._fp = null;
+  le._ft = false;
   paintLim();
   saveLore();
 };

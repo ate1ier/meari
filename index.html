@@ -137,7 +137,7 @@
   <div class="lpage" id="lod" hidden>
     <button class="back" id="lob" type="button"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span></span></button>
     <div class="lhd" id="lhd">
-      <div class="lim" id="lim"><button type="button" class="limb" id="limb" aria-label="이미지 올리기"></button><button type="button" id="limx" hidden>이미지 지우기</button><input type="file" id="limf" accept="image/*" hidden></div>
+      <div class="lim" id="lim"><button type="button" class="limb" id="limb" aria-label="이미지 올리기"></button><button type="button" id="limc" hidden>이미지 바꾸기</button><button type="button" id="limx" hidden>이미지 지우기</button><input type="file" id="limf" accept="image/*" hidden></div>
       <div class="lhi">
         <div class="chips" id="lodc" role="group" aria-label="분류"></div>
         <label class="sr" for="loti">이름</label><input class="ti" id="loti" maxlength="100" placeholder="이름을 붙여 주세요" autocomplete="off">
@@ -238,6 +238,7 @@
 <div class="lt" id="lt" hidden></div>
 <div class="atm" id="atm" role="listbox" aria-label="설정 자동완성" hidden></div>
 <div class="svbar" id="svbar" role="status" hidden><span id="svm"></span><span id="svc" aria-hidden="true"></span><button type="button" id="svr">지금 다시 시도</button><button type="button" id="svd" hidden>내 글 내려받기</button></div>
+<div class="imv" id="imv" role="dialog" aria-modal="true" aria-label="이미지 원본" hidden><button type="button" class="imx" id="imx" aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><img id="imvi" alt=""><p class="imvs" id="imvs" role="status"></p></div>
 <div class="toast" id="toast" role="status"></div>
 <script src="js/config.js"></script>
 <script src="js/state.js"></script>

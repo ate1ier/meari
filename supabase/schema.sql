@@ -69,6 +69,7 @@ create table if not exists public.lore_items (
   links   jsonb  not null default '[]'::jsonb check (jsonb_typeof(links) = 'array' and pg_column_size(links) <= 8000),  -- 연결: [{k,id,r}]
   ev_date text   not null default '' check (char_length(ev_date) <= 30),  -- 타임라인 날짜(자유 입력)
   img     text   not null default '' check (char_length(img) <= 60000),  -- 항목 이미지(data URL)
+  img_full text  not null default '' check (char_length(img_full) <= 1400000),  -- 항목 이미지 원본(큰 JPEG, 누를 때만 읽어요)
   map_x   real,  map_y real,  -- 지도 위치(0~100 %), 둘 다 비면 미배치
   check ((map_x is null and map_y is null) or (map_x between 0 and 100 and map_y between 0 and 100)),
   created_at timestamptz not null default now(),

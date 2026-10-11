@@ -285,6 +285,7 @@ function plan(sb, uid, o) {
           links,
           ev_date: evd,
           img,
+          ...(img === '' ? { img_full: '' } : {}) /* 이미지를 지우면 원본도 함께 지워요 */,
           map_x: mx,
           map_y: my,
           updated_at: now(),
@@ -303,6 +304,29 @@ function plan(sb, uid, o) {
           await sb.from('lore_items').delete().eq('user_id', uid).eq('kind', o.kind).eq('id', o.id)
         );
       };
+    case 'lo-img': {
+      /* 항목 이미지 원본(큰 JPEG): 목록에는 싣지 않고 따로 저장해요. 항목(lo)을 먼저 저장한 뒤에 와요 */
+      if (
+        !(
+          ['world', 'codex'].includes(o.kind) &&
+          isInt(o.id) &&
+          isStr(o.full, 1400000) &&
+          /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(o.full)
+        )
+      )
+        bad();
+      return async () => {
+        E(
+          await sb
+            .from('lore_items')
+            .update({ img_full: o.full })
+            .eq('user_id', uid)
+            .eq('kind', o.kind)
+            .eq('id', o.id)
+            .neq('img', '') /* 그새 이미지를 지웠다면 원본도 남기지 않아요 */
+        );
+      };
+    }
     case 'me': {
       const rows = rowsOf(o, 100).map(r => {
         if (!(isInt(r.id) && r.id > 0 && isStr(r.t, 200) && isTime(r.at))) bad();
@@ -470,6 +494,21 @@ export function makeHandler(sb, cfg = {}) {
             .in('id', b.ids)
         );
         return send(200, { ok: true, chapters: r.data });
+      }
+
+      /* 항목 이미지 원본 읽기: 이미지를 눌렀을 때만 받아요 */
+      if (b.op === 'lore-img') {
+        if (!(['world', 'codex'].includes(b.kind) && isInt(b.id))) bad();
+        const r = E(
+          await sb
+            .from('lore_items')
+            .select('img_full')
+            .eq('user_id', uid)
+            .eq('kind', b.kind)
+            .eq('id', b.id)
+            .maybeSingle()
+        );
+        return send(200, { ok: true, full: (r.data && r.data.img_full) || '' });
       }
 
       if (b.op === 'load') {

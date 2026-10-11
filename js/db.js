@@ -640,8 +640,24 @@ const db = (() => {
     lore(k, x) {
       enqueue('lo:' + k + ':' + x.id, () => {
         const W = wkOf(x.w);
-        return W && W[k].includes(x) ? w([{ t: 'lo', rows: [rowLo(k, x)] }]) : null;
+        if (!(W && W[k].includes(x))) return null;
+        /* 새로 올린 이미지 원본(x._fp)은 항목 저장 바로 뒤에 따로 보내요. 성공했을 때만 비워서, 실패하면 다시 시도할 때 함께 가요 */
+        const fp = x.i && x._fp;
+        const p = w([
+          { t: 'lo', rows: [rowLo(k, x)] },
+          ...(fp ? [{ t: 'lo-img', kind: k, id: x.id, full: fp }] : []),
+        ]);
+        return fp
+          ? p.then(r => {
+              if (x._fp === fp) x._fp = null;
+              return r;
+            })
+          : p;
       });
+    },
+    /* 항목 이미지 원본 읽기(이미지를 눌렀을 때만). 원본이 없으면 '' */
+    loreImg(k, id) {
+      return api('lore-img', { kind: k, id }).then(j => (typeof j.full === 'string' ? j.full : ''));
     },
     delLore(k, id) {
       enqueue('dello:' + k + ':' + id, () => w([{ t: 'lo-del', kind: k, id }]));

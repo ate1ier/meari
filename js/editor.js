@@ -1433,7 +1433,7 @@ function ltShow(h) {
     tip.innerHTML = `<small>맞춤법</small><b>${esc(h.m.t)} → ${esc(h.m.fix)}</b><p>${esc(h.m.note)}</p><div class="ltb"><button type="button" data-a="sp" class="pri">고치기</button><button type="button" data-a="ig">이대로 두기</button></div><em>‘이대로 두기’는 내 계정에 저장돼요 · F8 다음 오류</em>`;
   else {
     const x = h.o.x,
-      b = (x.b || '').trim();
+      b = lprev(x.b).trim();
     tip.innerHTML =
       `<small>${esc(h.o.n)} · ${esc(x.c)}</small><b>${esc(h.o.c)}</b><p>${b ? esc(b.length > 90 ? b.slice(0, 90) + '…' : b) : '아직 적어 둔 내용이 없어요.'}</p>` +
       (h.v ? `<p class="warn">설정집에는 ‘${esc(h.o.c)}’로 적혀 있어요.</p>` : '') +

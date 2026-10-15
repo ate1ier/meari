@@ -218,7 +218,7 @@ function worksHome() {
         .slice(0, 3)
         .map(
           x =>
-            `<button class="wc" type="button" data-go="${k}" data-id="${x.id}"><b>${esc(x.t) || '제목 없음'}</b><small>${esc(x.c)}</small><span>${esc(x.b)}</span></button>`
+            `<button class="wc" type="button" data-go="${k}" data-id="${x.id}"><b>${esc(x.t) || '제목 없음'}</b><small>${esc(x.c)}</small><span>${esc(lprev(x.b))}</span></button>`
         )
         .join('') || '<p class="none">아직 항목이 없어요.</p>';
   });
@@ -527,7 +527,7 @@ function card(x) {
     im = imgOk(x.i),
     pr = k[0] === 'person',
     nm = lnm(x);
-  return `<button class="card${im ? ' hv' : ''}${pr ? ' pr' : ''}" type="button" data-id="${x.id}" style="--h:${k[2]}">${im ? `<img class="cav" src="${x.i}" alt="">` : pr ? `<div class="cav ph" aria-hidden="true">${esc([...nm][0])}</div>` : ''}<small class="ck">${cdot(x.c)}${esc(x.c)}${badges(x)}</small><b>${esc(x.t) || '제목 없음'}</b><span>${esc(x.b)}</span></button>`;
+  return `<button class="card${im ? ' hv' : ''}${pr ? ' pr' : ''}" type="button" data-id="${x.id}" style="--h:${k[2]}">${im ? `<img class="cav" src="${x.i}" alt="">` : pr ? `<div class="cav ph" aria-hidden="true">${esc([...nm][0])}</div>` : ''}<small class="ck">${cdot(x.c)}${esc(x.c)}${badges(x)}</small><b>${esc(x.t) || '제목 없음'}</b><span>${esc(lprev(x.b))}</span></button>`;
 }
 function paintLore() {
   const l = L(),
@@ -705,6 +705,219 @@ function sizeBody() {
   b.style.height = 'auto';
   b.style.height = b.scrollHeight + 'px';
 }
+/* 표: 본문 안의 마크다운 표(| 항목 | 내용 |)를 표 편집기로 고쳐요. 따로 저장하는 곳은 없고 본문 글자 그대로 저장돼서 DB 변경이 필요 없어요 */
+const TB_SEP = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/,
+  TB_ROWS = 50,
+  TB_COLS = 8;
+let tbAt = null,
+  tbT;
+function tbSplit(s) {
+  let t = s.trim();
+  if (t.startsWith('|')) t = t.slice(1);
+  if (t.endsWith('|') && !t.endsWith('\\|')) t = t.slice(0, -1);
+  const out = [];
+  let c = '';
+  for (let i = 0; i < t.length; i++) {
+    if (t[i] === '\\' && t[i + 1] === '|') {
+      c += '|';
+      i++;
+    } else if (t[i] === '|') {
+      out.push(c.trim());
+      c = '';
+    } else c += t[i];
+  }
+  out.push(c.trim());
+  return out;
+}
+function tbFind(b) {
+  const ls = b.split('\n'),
+    out = [];
+  for (let i = 0; i < ls.length - 1; i++) {
+    if (!ls[i].trim().startsWith('|') || !ls[i + 1].includes('|') || !TB_SEP.test(ls[i + 1]))
+      continue;
+    let e = i + 2;
+    while (e < ls.length && ls[e].trim().startsWith('|')) e++;
+    const rows = [tbSplit(ls[i]), ...ls.slice(i + 2, e).map(tbSplit)],
+      n = Math.max(...rows.map(r => r.length)),
+      sp = tbSplit(ls[i + 1]);
+    rows.forEach(r => {
+      while (r.length < n) r.push('');
+    });
+    /* 열 정렬: 구분선의 :--- (왼쪽) · :---: (가운데) · ---: (오른쪽). rows.al 에 열마다 'l'|'c'|'r' 로 둬요 */
+    rows.al = rows[0].map((_, x) => {
+      const q = sp[x] || '';
+      return q.startsWith(':') && q.endsWith(':') ? 'c' : q.endsWith(':') ? 'r' : q.startsWith(':') ? 'l' : '';
+    });
+    out.push({ s: i, e, rows });
+    i = e - 1;
+  }
+  return { ls, out };
+}
+const tbCell = v =>
+  String(v)
+    .replace(/\r?\n/g, ' ')
+    .replace(/\|/g, '\\|')
+    .trim();
+function tbLines(rows) {
+  const f = r => '| ' + r.map(tbCell).join(' | ') + ' |';
+  return [
+    f(rows[0]),
+    '| ' + rows[0].map((_, x) => ({ l: ':---', c: ':---:', r: '---:' })[(rows.al || [])[x]] || '---').join(' | ') + ' |',
+    ...rows.slice(1).map(f),
+  ];
+}
+/* 카드·툴팁 미리보기에서는 표를 "[표 3행]" 한 줄로 줄여요 */
+function lprev(b) {
+  b = b || '';
+  if (!b.includes('|')) return b;
+  const { ls, out } = tbFind(b);
+  for (let i = out.length - 1; i >= 0; i--) {
+    const t = out[i];
+    ls.splice(t.s, t.e - t.s, `[표 ${t.rows.length - 1}행]`);
+  }
+  return ls.join('\n');
+}
+function tbTouch() {
+  $('#lost').textContent = '저장 중…';
+  clearTimeout(lt);
+  lt = setTimeout(saveLore, 600);
+}
+function tbPut(i, rows) {
+  const { ls, out } = tbFind(le.b),
+    t = out[i];
+  if (!t) return;
+  ls.splice(t.s, t.e - t.s, ...(rows ? tbLines(rows) : []));
+  le.b = ls.join('\n');
+  $('#lobd').value = le.b;
+  sizeBody();
+  tbTouch();
+}
+function tbPaint() {
+  if (!le) return;
+  const { out } = tbFind(le.b);
+  $('#ltn').textContent = out.length ? `${out.length}개` : '';
+  $('#ltbh').hidden = out.length > 0;
+  $('#ltb').innerHTML = out
+    .map(
+      (t, i) =>
+        `<div class="tb" data-i="${i}"><div class="tbs"><table>${t.rows
+          .map(
+            (r, y) =>
+              `<tr>${r
+                .map(
+                  (v, x) =>
+                    `<${y ? 'td' : 'th'}><input data-al="${t.rows.al[x] || ''}" value="${esc(v)}" data-y="${y}" data-x="${x}" maxlength="200" autocomplete="off" aria-label="${y + 1}행 ${x + 1}열"></${y ? 'td' : 'th'}>`
+                )
+                .join('')}</tr>`
+          )
+          .join(
+            ''
+          )}</table></div><div class="tbt"><button type="button" data-a="r+">행 추가</button><button type="button" data-a="c+">열 추가</button><button type="button" data-a="r-">행 삭제</button><button type="button" data-a="c-">열 삭제</button><span class="tbg" role="group" aria-label="열 정렬"><button type="button" data-a="al-l">왼쪽</button><button type="button" data-a="al-c">가운데</button><button type="button" data-a="al-r">오른쪽</button></span><button type="button" data-a="del" class="tbx">표 삭제</button></div></div>`
+    )
+    .join('');
+}
+function tbFocus(i, y, x) {
+  $(`#ltb .tb[data-i="${i}"] input[data-y="${y}"][data-x="${x}"]`)?.focus();
+}
+$('#lta').onclick = () => {
+  const ta = $('#lobd'),
+    v = ta.value,
+    at = document.activeElement === ta ? ta.selectionEnd : v.length,
+    pre = v.slice(0, at),
+    post = v.slice(at),
+    tbl = tbLines([
+      ['항목', '내용'],
+      ['', ''],
+      ['', ''],
+      ['', ''],
+    ]).join('\n'),
+    ins =
+      (!pre || pre.endsWith('\n\n') ? '' : pre.endsWith('\n') ? '\n' : '\n\n') +
+      tbl +
+      (!post ? '\n' : post.startsWith('\n\n') ? '' : post.startsWith('\n') ? '\n' : '\n\n');
+  le.b = pre + ins + post;
+  ta.value = le.b;
+  sizeBody();
+  tbTouch();
+  tbPaint();
+  tbFocus(tbFind(le.b).out.findIndex(t => t.s >= pre.split('\n').length - 1), 0, 0);
+};
+$('#ltb').addEventListener('input', e => {
+  const g = e.target.closest('.tb');
+  if (!g || e.target.tagName !== 'INPUT') return;
+  const i = +g.dataset.i,
+    rows = tbFind(le.b).out[i]?.rows;
+  if (!rows) return;
+  rows[+e.target.dataset.y][+e.target.dataset.x] = e.target.value;
+  tbPut(i, rows);
+});
+$('#ltb').addEventListener('focusin', e => {
+  const g = e.target.closest('.tb');
+  if (g && e.target.tagName === 'INPUT')
+    tbAt = { i: +g.dataset.i, y: +e.target.dataset.y, x: +e.target.dataset.x };
+});
+$('#ltb').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.isComposing || e.target.tagName !== 'INPUT') return;
+  e.preventDefault();
+  const g = e.target.closest('.tb'),
+    i = +g.dataset.i,
+    y = +e.target.dataset.y,
+    x = +e.target.dataset.x,
+    rows = tbFind(le.b).out[i]?.rows;
+  if (!rows) return;
+  if (y + 1 >= rows.length) {
+    if (rows.length >= TB_ROWS) return;
+    rows.push(rows[0].map(() => ''));
+    tbPut(i, rows);
+    tbPaint();
+  }
+  tbFocus(i, y + 1, x);
+});
+$('#ltb').onclick = e => {
+  const b = e.target.closest('button[data-a]'),
+    g = b && b.closest('.tb');
+  if (!g) return;
+  const i = +g.dataset.i,
+    rows = tbFind(le.b).out[i]?.rows;
+  if (!rows) return;
+  const at = tbAt && tbAt.i === i ? tbAt : { y: rows.length - 1, x: rows[0].length - 1 },
+    a = b.dataset.a;
+  let y = Math.min(at.y, rows.length - 1),
+    x = Math.min(at.x, rows[0].length - 1);
+  if (a === 'del') {
+    tbPut(i, null);
+    tbAt = null;
+    tbPaint();
+    return;
+  }
+  if (a === 'r+') {
+    if (rows.length >= TB_ROWS) return;
+    rows.splice(y + 1, 0, rows[0].map(() => ''));
+    y++;
+  } else if (a === 'c+') {
+    if (rows[0].length >= TB_COLS) return;
+    rows.forEach(r => r.splice(x + 1, 0, ''));
+    rows.al.splice(x + 1, 0, rows.al[x] || '');
+    x++;
+  } else if (a === 'r-') {
+    if (rows.length <= 2) return;
+    rows.splice(y || rows.length - 1, 1);
+    y = Math.min(y || rows.length - 1, rows.length - 1);
+  } else if (a === 'c-') {
+    if (rows[0].length <= 1) return;
+    rows.forEach(r => r.splice(x, 1));
+    rows.al.splice(x, 1);
+    x = Math.min(x, rows[0].length - 1);
+  }
+  else if (a.startsWith('al-')) {
+    const v = a.slice(3);
+    rows.al[x] = rows.al[x] === v ? '' : v;
+  }
+  tbPut(i, rows);
+  tbAt = { i, y, x };
+  tbPaint();
+  tbFocus(i, y, x);
+};
 function openLore(x) {
   le = x;
   $('#lol').hidden = true;
@@ -715,6 +928,8 @@ function openLore(x) {
   $('#lodt').value = x.d || '';
   paintLim();
   $('#lobd').value = x.b;
+  tbAt = null;
+  tbPaint();
   $('#lost').textContent = '저장됨';
   lkPick(false);
   paintLinks();
@@ -750,6 +965,8 @@ $('#lod').addEventListener('input', e => {
   else if (e.target.id === 'lobd') {
     le.b = e.target.value;
     sizeBody();
+    clearTimeout(tbT);
+    tbT = setTimeout(tbPaint, 300);
   } else return;
   $('#lost').textContent = '저장 중…';
   clearTimeout(lt);

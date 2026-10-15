@@ -1927,3 +1927,120 @@ li.none.emp {
   font-size: 0.82rem;
   color: rgba(255, 255, 255, 0.75);
 }
+/* 항목 상세의 표 편집기 */
+.ltbs .llh small {
+  margin-left: 0.3rem;
+  color: var(--mute);
+  font-weight: 400;
+}
+.ltbh {
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--mute);
+}
+.ltbh[hidden] {
+  display: none;
+}
+.tb {
+  margin-top: 1rem;
+}
+.tbs {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.tb table {
+  width: 100%;
+  min-width: 100%;
+  border-collapse: collapse;
+}
+.tb th,
+.tb td {
+  padding: 0;
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-left: 0;
+  min-width: 7rem;
+}
+.tb tr:last-child td {
+  border-bottom: 0;
+}
+.tb th:last-child,
+.tb td:last-child {
+  border-right: 0;
+}
+.tb th {
+  background: var(--soft);
+}
+.tb input {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  padding: 0.45rem 0.7rem;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--fg);
+  caret-color: var(--fg);
+  font: inherit;
+  font-size: 0.92rem;
+}
+.tb th input {
+  font-weight: 600;
+}
+.tb input:focus {
+  background: var(--field);
+  box-shadow: inset 0 0 0 2px var(--acc);
+}
+.tbt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+.tbt button {
+  min-height: 32px;
+  padding: 0 0.7rem;
+  border-radius: 9px;
+  background: var(--soft);
+  color: var(--mute);
+  font-size: 0.78rem;
+  transition:
+    background var(--t-hover),
+    color var(--t-hover);
+}
+.tbt button:hover {
+  color: var(--fg);
+}
+.tbt .tbx {
+  margin-left: auto;
+}
+.tbt .tbx:hover {
+  color: var(--err);
+}
+/* 열 정렬(가로)과 칸 세로 가운데 정렬 */
+.tb td,
+.tb th {
+  vertical-align: middle;
+}
+.tb input {
+  height: 100%;
+  min-height: 44px;
+  line-height: 1.4;
+}
+.tb input[data-al='l'] {
+  text-align: left;
+}
+.tb input[data-al='c'] {
+  text-align: center;
+}
+.tb input[data-al='r'] {
+  text-align: right;
+}
+.tbg {
+  display: inline-flex;
+  gap: 0.4rem;
+  margin-left: 0.4rem;
+  padding-left: 0.4rem;
+  border-left: 1px solid var(--line);
+}

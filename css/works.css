@@ -163,7 +163,11 @@
 .lpage .chips {
   margin-top: 1.2rem;
 }
-#lobd {
+#lobd[hidden] {
+  display: none;
+}
+#lobd,
+.lbt {
   display: block;
   width: 100%;
   min-height: 40vh;
@@ -179,7 +183,8 @@
     serif;
   word-break: keep-all;
 }
-#lobd::placeholder {
+#lobd::placeholder,
+.lbt::placeholder {
   color: var(--mute);
 }
 .ldf {
@@ -2043,4 +2048,68 @@ li.none.emp {
   margin-left: 0.4rem;
   padding-left: 0.4rem;
   border-left: 1px solid var(--line);
+}
+/* 본문 글 조각: 표 사이사이에서 이어 써요 */
+.lbt {
+  min-height: 2.4em;
+}
+.lbt.solo {
+  min-height: 40vh;
+}
+.lbx > .lbt:last-child:not(.solo) {
+  min-height: 6rem;
+}
+.tb {
+  margin: 0.6rem 0;
+}
+.tb .tbt {
+  display: none;
+}
+.tb:focus-within .tbt,
+.tb:hover .tbt {
+  display: flex;
+}
+/* 칸 크기 조절 손잡이 */
+.tb th,
+.tb td {
+  position: relative;
+}
+.tb table.fx {
+  table-layout: fixed;
+}
+.tb input {
+  min-height: 40px;
+}
+.tbc,
+.tbr {
+  position: absolute;
+  z-index: 2;
+  touch-action: none;
+  background: transparent;
+  transition: background var(--t-hover);
+}
+.tbc {
+  top: 0;
+  right: -4px;
+  width: 9px;
+  height: 100%;
+  cursor: col-resize;
+}
+.tbr {
+  left: 0;
+  bottom: -4px;
+  width: 100%;
+  height: 9px;
+  cursor: row-resize;
+}
+.tb th:last-child .tbc,
+.tb td:last-child .tbc {
+  right: 0;
+}
+.tb tr:last-child .tbr {
+  bottom: 0;
+}
+.tbc:hover,
+.tbr:hover {
+  background: var(--acc);
 }

@@ -706,7 +706,8 @@ function sizeBody() {
   b.style.height = b.scrollHeight + 'px';
 }
 /* 표: 본문 안의 마크다운 표(| 항목 | 내용 |)를 표 편집기로 고쳐요. 따로 저장하는 곳은 없고 본문 글자 그대로 저장돼서 DB 변경이 필요 없어요 */
-const TB_SEP = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/,
+const TB_META = /^<!--\s*meari-table\s+w=([\d,]*)\s*;\s*h=([\d,]*)\s*-->$/,
+  TB_SEP = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/,
   TB_ROWS = 50,
   TB_COLS = 8;
 let tbAt = null,
@@ -737,7 +738,10 @@ function tbFind(b) {
       continue;
     let e = i + 2;
     while (e < ls.length && ls[e].trim().startsWith('|')) e++;
-    const rows = [tbSplit(ls[i]), ...ls.slice(i + 2, e).map(tbSplit)],
+    const te = e,
+      mt = ls[e] && TB_META.exec(ls[e].trim()); /* 표 바로 아래의 크기 주석 한 줄 */
+    if (mt) e++;
+    const rows = [tbSplit(ls[i]), ...ls.slice(i + 2, te).map(tbSplit)],
       n = Math.max(...rows.map(r => r.length)),
       sp = tbSplit(ls[i + 1]);
     rows.forEach(r => {
@@ -748,10 +752,19 @@ function tbFind(b) {
       const q = sp[x] || '';
       return q.startsWith(':') && q.endsWith(':') ? 'c' : q.endsWith(':') ? 'r' : q.startsWith(':') ? 'l' : '';
     });
+    const nums = q => (q || '').split(',').map(v => Math.max(0, parseInt(v, 10) || 0));
+    rows.w = nums(mt && mt[1]);
+    rows.h = nums(mt && mt[2]);
+    tbDim(rows);
     out.push({ s: i, e, rows });
     i = e - 1;
   }
   return { ls, out };
+}
+/* 칸 크기: rows.w[열] · rows.h[행] 은 px, 0 이면 자동. 열·행 수에 맞춰 길이를 맞춰요 */
+function tbDim(rows) {
+  rows.w = rows[0].map((_, x) => (rows.w || [])[x] || 0);
+  rows.h = rows.map((_, y) => (rows.h || [])[y] || 0);
 }
 const tbCell = v =>
   String(v)
@@ -764,6 +777,9 @@ function tbLines(rows) {
     f(rows[0]),
     '| ' + rows[0].map((_, x) => ({ l: ':---', c: ':---:', r: '---:' })[(rows.al || [])[x]] || '---').join(' | ') + ' |',
     ...rows.slice(1).map(f),
+    ...(rows.w && rows.h && (rows.w.some(Boolean) || rows.h.some(Boolean))
+      ? [`<!--meari-table w=${rows.w.join(',')};h=${rows.h.join(',')}-->`]
+      : []),
   ];
 }
 /* 카드·툴팁 미리보기에서는 표를 "[표 3행]" 한 줄로 줄여요 */
@@ -777,147 +793,269 @@ function lprev(b) {
   }
   return ls.join('\n');
 }
+/* 본문 편집기: 본문을 글 조각(textarea)과 표 조각(표 편집기)으로 나눠 순서대로 보여 줘요. 저장은 여전히 본문 글자 하나(le.b)예요 */
+let tbS = [],
+  tbLast = null;
+function tbSegs(b) {
+  const { ls, out } = tbFind(b),
+    segs = [];
+  let pos = 0;
+  out.forEach(t => {
+    segs.push({ l: ls.slice(pos, t.s) }, { rows: t.rows });
+    pos = t.e;
+  });
+  segs.push({ l: ls.slice(pos) });
+  if (segs.length === 1 && segs[0].l.length === 1 && segs[0].l[0] === '') segs[0].l = [];
+  return segs;
+}
+function tbJoin(segs) {
+  const out = [];
+  let after = false; /* 표 바로 뒤라서 빈 줄이 필요한지 — 표와 표, 표와 | 로 시작하는 글이 한 표로 합쳐지지 않게 */
+  segs.forEach(s => {
+    const ls = s.rows ? tbLines(s.rows) : s.l;
+    if (!ls.length) return;
+    if (after && (s.rows || ls[0].trim().startsWith('|'))) out.push('');
+    out.push(...ls);
+    after = !!s.rows;
+  });
+  return out.join('\n');
+}
+function tbSync() {
+  le.b = tbJoin(tbS);
+  $('#lobd').value = le.b;
+  tbTouch();
+}
 function tbTouch() {
   $('#lost').textContent = '저장 중…';
   clearTimeout(lt);
   lt = setTimeout(saveLore, 600);
 }
-function tbPut(i, rows) {
-  const { ls, out } = tbFind(le.b),
-    t = out[i];
-  if (!t) return;
-  ls.splice(t.s, t.e - t.s, ...(rows ? tbLines(rows) : []));
-  le.b = ls.join('\n');
-  $('#lobd').value = le.b;
-  sizeBody();
-  tbTouch();
+const tbSize = ta => {
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+};
+function tbHtml(s, k) {
+  const tag = y => (y ? 'td' : 'th'),
+    W = s.rows.w,
+    fx = W.some(Boolean);
+  return `<div class="tb" data-k="${k}"><div class="tbs"><table${fx ? ` class="fx" style="width:${W.reduce((a, w) => a + (w || 160), 0)}px;min-width:0"` : ''}><colgroup>${W.map(w => `<col${fx ? ` style="width:${w || 160}px"` : ''}>`).join('')}</colgroup>${s.rows
+    .map(
+      (r, y) =>
+        `<tr>${r
+          .map(
+            (v, x) =>
+              `<${tag(y)}><input data-al="${s.rows.al[x] || ''}"${s.rows.h[y] ? ` style="min-height:${s.rows.h[y]}px"` : ''} value="${esc(v)}" data-y="${y}" data-x="${x}" maxlength="200" autocomplete="off" aria-label="${y + 1}행 ${x + 1}열"><i class="tbc" data-i="${x}" title="끌어서 너비 조절 · 두 번 눌러 자동"></i><i class="tbr" data-i="${y}" title="끌어서 높이 조절 · 두 번 눌러 자동"></i></${tag(y)}>`
+          )
+          .join('')}</tr>`
+    )
+    .join(
+      ''
+    )}</table></div><div class="tbt"><button type="button" data-a="r+">행 추가</button><button type="button" data-a="c+">열 추가</button><button type="button" data-a="r-">행 삭제</button><button type="button" data-a="c-">열 삭제</button><span class="tbg" role="group" aria-label="열 정렬"><button type="button" data-a="al-l">왼쪽</button><button type="button" data-a="al-c">가운데</button><button type="button" data-a="al-r">오른쪽</button></span><button type="button" data-a="del" class="tbx">표 삭제</button></div></div>`;
 }
 function tbPaint() {
   if (!le) return;
-  const { out } = tbFind(le.b);
-  $('#ltn').textContent = out.length ? `${out.length}개` : '';
-  $('#ltbh').hidden = out.length > 0;
-  $('#ltb').innerHTML = out
-    .map(
-      (t, i) =>
-        `<div class="tb" data-i="${i}"><div class="tbs"><table>${t.rows
-          .map(
-            (r, y) =>
-              `<tr>${r
-                .map(
-                  (v, x) =>
-                    `<${y ? 'td' : 'th'}><input data-al="${t.rows.al[x] || ''}" value="${esc(v)}" data-y="${y}" data-x="${x}" maxlength="200" autocomplete="off" aria-label="${y + 1}행 ${x + 1}열"></${y ? 'td' : 'th'}>`
-                )
-                .join('')}</tr>`
-          )
-          .join(
-            ''
-          )}</table></div><div class="tbt"><button type="button" data-a="r+">행 추가</button><button type="button" data-a="c+">열 추가</button><button type="button" data-a="r-">행 삭제</button><button type="button" data-a="c-">열 삭제</button><span class="tbg" role="group" aria-label="열 정렬"><button type="button" data-a="al-l">왼쪽</button><button type="button" data-a="al-c">가운데</button><button type="button" data-a="al-r">오른쪽</button></span><button type="button" data-a="del" class="tbx">표 삭제</button></div></div>`
+  tbS = tbSegs(le.b);
+  tbLast = null;
+  const n = tbS.filter(s => s.rows).length,
+    solo = tbS.length === 1,
+    box = $('#lobx');
+  $('#ltn').textContent = n ? `${n}개` : '';
+  box.innerHTML = tbS
+    .map((s, k) =>
+      s.rows
+        ? tbHtml(s, k)
+        : `<textarea class="lbt${solo ? ' solo' : ''}" data-k="${k}" rows="1" spellcheck="false" aria-label="본문"${solo ? ' placeholder="설정을 자유롭게 적어 두세요"' : ''}></textarea>`
     )
     .join('');
+  box.querySelectorAll('.lbt').forEach(ta => {
+    ta.value = tbS[+ta.dataset.k].l.join('\n');
+    tbSize(ta);
+  });
 }
-function tbFocus(i, y, x) {
-  $(`#ltb .tb[data-i="${i}"] input[data-y="${y}"][data-x="${x}"]`)?.focus();
+function tbFocus(k, y, x) {
+  $(`#lobx .tb[data-k="${k}"] input[data-y="${y}"][data-x="${x}"]`)?.focus();
 }
+/* 표를 넣는 자리: 마지막으로 커서가 있던 글 조각의 그 위치(없으면 맨 끝) */
 $('#lta').onclick = () => {
-  const ta = $('#lobd'),
-    v = ta.value,
-    at = document.activeElement === ta ? ta.selectionEnd : v.length,
-    pre = v.slice(0, at),
-    post = v.slice(at),
-    tbl = tbLines([
+  let k = tbS.length - 1;
+  while (k > 0 && tbS[k].rows) k--;
+  let at = tbS[k].l.join('\n').length;
+  if (tbLast && tbS[tbLast.k] && !tbS[tbLast.k].rows) {
+    k = tbLast.k;
+    at = Math.min(tbLast.at, tbS[k].l.join('\n').length);
+  }
+  const v = tbS[k].l.join('\n'),
+    pre = v.slice(0, at).replace(/\n$/, ''),
+    post = v.slice(at).replace(/^\n/, ''),
+    rows = [
       ['항목', '내용'],
       ['', ''],
       ['', ''],
       ['', ''],
-    ]).join('\n'),
-    ins =
-      (!pre || pre.endsWith('\n\n') ? '' : pre.endsWith('\n') ? '\n' : '\n\n') +
-      tbl +
-      (!post ? '\n' : post.startsWith('\n\n') ? '' : post.startsWith('\n') ? '\n' : '\n\n');
-  le.b = pre + ins + post;
-  ta.value = le.b;
-  sizeBody();
-  tbTouch();
+    ];
+  rows.al = ['', ''];
+  rows.w = [0, 0];
+  rows.h = [0, 0, 0, 0];
+  tbS.splice(k, 1, { l: pre ? pre.split('\n') : [] }, { rows }, { l: post ? post.split('\n') : [] });
+  tbSync();
   tbPaint();
-  tbFocus(tbFind(le.b).out.findIndex(t => t.s >= pre.split('\n').length - 1), 0, 0);
+  tbFocus(k + 1, 0, 0);
 };
-$('#ltb').addEventListener('input', e => {
-  const g = e.target.closest('.tb');
-  if (!g || e.target.tagName !== 'INPUT') return;
-  const i = +g.dataset.i,
-    rows = tbFind(le.b).out[i]?.rows;
-  if (!rows) return;
-  rows[+e.target.dataset.y][+e.target.dataset.x] = e.target.value;
-  tbPut(i, rows);
+const tbBox = $('#lobx');
+tbBox.addEventListener('input', e => {
+  const t = e.target;
+  if (t.classList.contains('lbt')) {
+    const k = +t.dataset.k;
+    tbS[k].l = t.value === '' ? [] : t.value.split('\n');
+    tbSize(t);
+    tbSync();
+    /* 글 조각에 표 문법(| 항목 | … 과 | --- |)을 쓰거나 붙여 넣으면 표 편집기로 바꿔요 */
+    clearTimeout(tbT);
+    tbT = setTimeout(() => {
+      if (!tbS[k] || tbS[k].rows || !tbFind(tbS[k].l.join('\n')).out.length) return;
+      const before = tbS.slice(0, k).filter(s => s.rows).length;
+      tbPaint();
+      const idx = tbS.findIndex((s, i) => s.rows && tbS.slice(0, i).filter(q => q.rows).length === before);
+      if (idx >= 0) tbFocus(idx, 0, 0);
+    }, 450);
+  } else if (t.tagName === 'INPUT') {
+    const g = t.closest('.tb'),
+      s = g && tbS[+g.dataset.k];
+    if (!s) return;
+    s.rows[+t.dataset.y][+t.dataset.x] = t.value;
+    tbSync();
+  }
 });
-$('#ltb').addEventListener('focusin', e => {
-  const g = e.target.closest('.tb');
-  if (g && e.target.tagName === 'INPUT')
-    tbAt = { i: +g.dataset.i, y: +e.target.dataset.y, x: +e.target.dataset.x };
+tbBox.addEventListener('focusin', e => {
+  const t = e.target,
+    g = t.closest('.tb');
+  if (g && t.tagName === 'INPUT') tbAt = { k: +g.dataset.k, y: +t.dataset.y, x: +t.dataset.x };
 });
-$('#ltb').addEventListener('keydown', e => {
+tbBox.addEventListener('focusout', e => {
+  const t = e.target;
+  if (t.classList && t.classList.contains('lbt')) tbLast = { k: +t.dataset.k, at: t.selectionEnd };
+});
+tbBox.addEventListener('keydown', e => {
   if (e.key !== 'Enter' || e.isComposing || e.target.tagName !== 'INPUT') return;
   e.preventDefault();
-  const g = e.target.closest('.tb'),
-    i = +g.dataset.i,
-    y = +e.target.dataset.y,
-    x = +e.target.dataset.x,
-    rows = tbFind(le.b).out[i]?.rows;
+  const t = e.target,
+    k = +t.closest('.tb').dataset.k,
+    y = +t.dataset.y,
+    x = +t.dataset.x,
+    rows = tbS[k]?.rows;
   if (!rows) return;
   if (y + 1 >= rows.length) {
     if (rows.length >= TB_ROWS) return;
     rows.push(rows[0].map(() => ''));
-    tbPut(i, rows);
+    tbDim(rows);
+    tbSync();
     tbPaint();
   }
-  tbFocus(i, y + 1, x);
+  tbFocus(k, y + 1, x);
 });
-$('#ltb').onclick = e => {
+tbBox.addEventListener('click', e => {
   const b = e.target.closest('button[data-a]'),
     g = b && b.closest('.tb');
   if (!g) return;
-  const i = +g.dataset.i,
-    rows = tbFind(le.b).out[i]?.rows;
+  const k = +g.dataset.k,
+    rows = tbS[k]?.rows;
   if (!rows) return;
-  const at = tbAt && tbAt.i === i ? tbAt : { y: rows.length - 1, x: rows[0].length - 1 },
+  const at = tbAt && tbAt.k === k ? tbAt : { y: rows.length - 1, x: rows[0].length - 1 },
     a = b.dataset.a;
+  tbDim(rows);
   let y = Math.min(at.y, rows.length - 1),
     x = Math.min(at.x, rows[0].length - 1);
   if (a === 'del') {
-    tbPut(i, null);
+    tbS.splice(k, 1);
+    if (tbS[k - 1] && !tbS[k - 1].rows && tbS[k] && !tbS[k].rows) {
+      tbS[k - 1].l = [...tbS[k - 1].l, ...tbS[k].l];
+      tbS.splice(k, 1);
+    }
     tbAt = null;
+    tbSync();
     tbPaint();
     return;
   }
   if (a === 'r+') {
     if (rows.length >= TB_ROWS) return;
     rows.splice(y + 1, 0, rows[0].map(() => ''));
+    rows.h.splice(y + 1, 0, 0);
     y++;
   } else if (a === 'c+') {
     if (rows[0].length >= TB_COLS) return;
     rows.forEach(r => r.splice(x + 1, 0, ''));
     rows.al.splice(x + 1, 0, rows.al[x] || '');
+    rows.w.splice(x + 1, 0, rows.w[x]);
     x++;
   } else if (a === 'r-') {
     if (rows.length <= 2) return;
-    rows.splice(y || rows.length - 1, 1);
-    y = Math.min(y || rows.length - 1, rows.length - 1);
+    const dy = y || rows.length - 1;
+    rows.splice(dy, 1);
+    rows.h.splice(dy, 1);
+    y = Math.min(dy, rows.length - 1);
   } else if (a === 'c-') {
     if (rows[0].length <= 1) return;
     rows.forEach(r => r.splice(x, 1));
     rows.al.splice(x, 1);
+    rows.w.splice(x, 1);
     x = Math.min(x, rows[0].length - 1);
-  }
-  else if (a.startsWith('al-')) {
+  } else if (a.startsWith('al-')) {
     const v = a.slice(3);
     rows.al[x] = rows.al[x] === v ? '' : v;
   }
-  tbPut(i, rows);
-  tbAt = { i, y, x };
+  tbAt = { k, y, x };
+  tbSync();
   tbPaint();
-  tbFocus(i, y, x);
-};
+  tbFocus(k, y, x);
+});
+/* 칸 크기 조절: 열 오른쪽 가장자리·행 아래쪽 가장자리를 끌면 px 로 저장해요(두 번 누르면 자동 크기로) */
+tbBox.addEventListener('pointerdown', e => {
+  const h = e.target.closest('.tbc, .tbr'),
+    g = h && h.closest('.tb'),
+    rows = g && tbS[+g.dataset.k]?.rows;
+  if (!rows) return;
+  e.preventDefault();
+  const col = h.classList.contains('tbc'),
+    i = +h.dataset.i,
+    tb = g.querySelector('table'),
+    cs = [...tb.querySelectorAll('col')],
+    sx = e.clientX,
+    sy = e.clientY;
+  tbDim(rows);
+  if (col) {
+    rows.w = [...tb.rows[0].cells].map(c => Math.round(c.getBoundingClientRect().width));
+    cs.forEach((c, x) => (c.style.width = rows.w[x] + 'px'));
+    tb.classList.add('fx');
+    tb.style.minWidth = '0';
+  }
+  const w0 = rows.w[i],
+    h0 = col ? 0 : Math.round(tb.rows[i].getBoundingClientRect().height);
+  h.setPointerCapture(e.pointerId);
+  h.onpointermove = m => {
+    if (col) {
+      rows.w[i] = Math.max(60, Math.min(600, w0 + m.clientX - sx));
+      cs[i].style.width = rows.w[i] + 'px';
+      tb.style.width = rows.w.reduce((a, v) => a + v, 0) + 'px';
+    } else {
+      rows.h[i] = Math.max(32, Math.min(400, h0 + m.clientY - sy));
+      tb.rows[i].querySelectorAll('input').forEach(n => (n.style.minHeight = rows.h[i] + 'px'));
+    }
+  };
+  h.onpointerup = h.onpointercancel = () => {
+    h.onpointermove = h.onpointerup = h.onpointercancel = null;
+    tbSync();
+  };
+});
+tbBox.addEventListener('dblclick', e => {
+  const h = e.target.closest('.tbc, .tbr'),
+    g = h && h.closest('.tb'),
+    rows = g && tbS[+g.dataset.k]?.rows;
+  if (!rows) return;
+  tbDim(rows);
+  (h.classList.contains('tbc') ? rows.w : rows.h)[+h.dataset.i] = 0;
+  tbSync();
+  tbPaint();
+});
 function openLore(x) {
   le = x;
   $('#lol').hidden = true;
